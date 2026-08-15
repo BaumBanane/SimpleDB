@@ -1,3 +1,8 @@
+# SimpleDB example files
+studentdb/*
+studentdb_server/*
+*.tbl
+
 # Compiled class file
 *.class
 

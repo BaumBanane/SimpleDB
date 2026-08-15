@@ -1,11 +1,189 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
+  <component name="ChangeListManager">
+    <list default="true" id="db9c35c6-6338-43f4-af2b-27344d55354d" name="Changes" comment="add simpledb/test files for Lab0&#10;&#10;create test files to interact with a local database with native classes instead of JDBC">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SimpleDBEngine/src/simpledb/test/SimpleIJ.java" beforeDir="false" afterPath="$PROJECT_DIR$/SimpleDBEngine/src/simpledb/test/SimpleIJ.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3HxTWr5W5WJf1bn4vqCmzA4BQbE" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.CreateStudentDB.executor": "Run",
+    "Application.SimpleIJ.executor": "Debug",
+    "Application.StartServer.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
+  <component name="RunManager" selected="Application.SimpleIJ">
+    <configuration name="FindMajors" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="simpledb.test.FindMajors" />
+      <module name="SimpleDBEngine" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="simpledb.test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="SimpleIJ" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="simpledb.test.SimpleIJ" />
+      <module name="SimpleDBEngine" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="simpledb.test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="StartServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="simpledb.server.StartServer" />
+      <module name="SimpleDBEngine" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="simpledb.server.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="StudentMajor" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="simpledb.test.StudentMajor" />
+      <module name="SimpleDBEngine" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="simpledb.test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="network.CreateStudentDB" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="network.CreateStudentDB" />
+      <module name="SimpleDBClients" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="network.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.FindMajors" />
+      <item itemvalue="Application.SimpleIJ" />
+      <item itemvalue="Application.StartServer" />
+      <item itemvalue="Application.StudentMajor" />
+      <item itemvalue="Application.network.CreateStudentDB" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.SimpleIJ" />
+        <item itemvalue="Application.network.CreateStudentDB" />
+        <item itemvalue="Application.StartServer" />
+        <item itemvalue="Application.FindMajors" />
+        <item itemvalue="Application.StudentMajor" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-26cb7f24e5b0-intellij.indexing.shared.core-IU-253.29346.138" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.29346.138" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="db9c35c6-6338-43f4-af2b-27344d55354d" name="Changes" comment="" />
+      <created>1786808754660</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1786808754660</updated>
+      <workItem from="1786808755758" duration="1201000" />
+    </task>
+    <task id="LOCAL-00001" summary="Template">
+      <option name="closed" value="true" />
+      <created>1786808780515</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1786808780515</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Template">
+      <option name="closed" value="true" />
+      <created>1786808864209</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1786808864209</updated>
+    </task>
+    <task id="LOCAL-00003" summary="add simpledb/test files for Lab0&#10;&#10;create test files to interact with a local database with native classes instead of JDBC">
+      <option name="closed" value="true" />
+      <created>1786809047890</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1786809047890</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Template" />
+    <MESSAGE value="add simpledb/test files for Lab0&#10;&#10;create test files to interact with a local database with native classes instead of JDBC" />
+    <option name="LAST_COMMIT_MESSAGE" value="add simpledb/test files for Lab0&#10;&#10;create test files to interact with a local database with native classes instead of JDBC" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/SimpleDBEngine/src/simpledb/test/SimpleIJ.java</url>
+          <line>92</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
 </project>
