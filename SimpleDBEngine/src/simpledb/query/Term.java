@@ -2,6 +2,7 @@ package simpledb.query;
 
 import simpledb.plan.Plan;
 import simpledb.record.*;
+import simpledb.parse.BadSyntaxException;
 
 /**
  * A term is a comparison between two expressions.
@@ -10,21 +11,24 @@ import simpledb.record.*;
  */
 public class Term {
    private Expression lhs, rhs;
-   
+   private String opr;
+
    /**
     * Create a new term that compares two expressions
-    * for equality.
+    * using the specified operator.
     * @param lhs  the LHS expression
     * @param rhs  the RHS expression
+    * @param opr  the operator string
     */
-   public Term(Expression lhs, Expression rhs) {
+   public Term(Expression lhs, Expression rhs, String opr) {
       this.lhs = lhs;
       this.rhs = rhs;
+      this.opr = opr;
    }
    
    /**
     * Return true if both of the term's expressions
-    * evaluate to the same constant,
+    * satisfies the given relationship defined by the operator,
     * with respect to the specified scan.
     * @param s the scan
     * @return true if both expressions have the same value in the scan
@@ -32,7 +36,20 @@ public class Term {
    public boolean isSatisfied(Scan s) {
       Constant lhsval = lhs.evaluate(s);
       Constant rhsval = rhs.evaluate(s);
-      return rhsval.equals(lhsval);
+
+      int cmp = lhsval.compareTo(rhsval);
+
+      switch (opr) {
+         case "=": return cmp == 0;
+         case "!=": return cmp != 0;
+         case "<>": return cmp != 0;
+         case "<": return cmp < 0;
+         case "<=": return cmp <= 0;
+         case ">": return cmp > 0;
+         case ">=": return cmp >= 0;
+         default: throw new BadSyntaxException();
+      }
+
    }
    
    /**
@@ -75,6 +92,10 @@ public class Term {
     * @return either the constant or null
     */
    public Constant equatesWithConstant(String fldname) {
+      // This method is only valid for the equality operator
+      if (!opr.equals("=")) {
+         return null;
+      }
       if (lhs.isFieldName() &&
           lhs.asFieldName().equals(fldname) &&
           !rhs.isFieldName())
@@ -96,6 +117,10 @@ public class Term {
     * @return either the name of the other field, or null
     */
    public String equatesWithField(String fldname) {
+      // This method is only valid for the equality operator
+      if (!opr.equals("=")) {
+         return null;
+      }
       if (lhs.isFieldName() &&
           lhs.asFieldName().equals(fldname) &&
           rhs.isFieldName())
@@ -119,6 +144,6 @@ public class Term {
    }
    
    public String toString() {
-      return lhs.toString() + "=" + rhs.toString();
+      return lhs.toString() + opr + rhs.toString();
    }
 }

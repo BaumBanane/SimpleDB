@@ -5,6 +5,10 @@ import simpledb.server.SimpleDB;
 import simpledb.tx.Transaction;
 import simpledb.record.*;
 
+/**
+ * Tests a two-table join pipeline (TableScan x TableScan -> ProductScan ->
+ * SelectScan -> ProjectScan) using a field-to-field equality predicate.
+ */
 public class ScanTest2 {
    public static void main(String[] args) throws Exception {
       SimpleDB db = new SimpleDB("scantest2");
@@ -43,7 +47,7 @@ public class ScanTest2 {
       Scan s2 = new TableScan(tx, "T2", layout2);
       Scan s3 = new ProductScan(s1, s2);
       // selecting all records where A=C
-      Term t = new Term(new Expression("A"), new Expression("C")); 
+      Term t = new Term(new Expression("A"), new Expression("C"), "=");
       Predicate pred = new Predicate(t);
       System.out.println("The predicate is " + pred);
       Scan s4 = new SelectScan(s3, pred);
