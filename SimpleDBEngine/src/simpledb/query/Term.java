@@ -61,6 +61,16 @@ public class Term {
     * @return the integer reduction factor.
     */
    public int reductionFactor(Plan p) {
+      // greater / smaller reduction factor can be approximated by 3, source https://www.vldb.org/conf/2003/papers/S28P03.pdf
+      // it is not the intuitive 2 because many queries only ask for small amounts of data, like recent entries
+      if (!opr.equals("=") && !opr.equals("!=") && !opr.equals("<>")){
+         return 3;
+      }
+      // not equal reduction factor is almost 1
+      if (opr.equals("!=") || opr.equals("<>")){
+         return 1;
+      }
+      // the following logic is for equality
       String lhsName, rhsName;
       if (lhs.isFieldName() && rhs.isFieldName()) {
          lhsName = lhs.asFieldName();
