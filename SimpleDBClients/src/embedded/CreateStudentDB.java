@@ -14,6 +14,14 @@ public class CreateStudentDB {
          stmt.executeUpdate(s);
          System.out.println("Table STUDENT created.");
 
+         // because of TableMgr.MAX_NAME, a field name can have a max length of 16.
+         // Indexes are also affected by this.
+         // The index needs to be created before any data is inserted.
+         // SimpleDB only updates indices when the underlying table changes.
+         s = "create index idxMajorId on student(majorid)";
+         stmt.executeUpdate(s);
+         System.out.println("index created: "+s);
+
          s = "insert into STUDENT(SId, SName, MajorId, GradYear) values ";
          String[] studvals = {"(1, 'joe', 10, 2021)",
                "(2, 'amy', 20, 2020)",
