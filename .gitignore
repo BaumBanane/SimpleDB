@@ -39,6 +39,7 @@ replay_pid*
 .idea/vcs.xml
 .idea/jsLibraryMappings.xml
 .idea/misc.xml
+.idea/checkstyle-idea.xml
 .idea/*.iml
 
 # Sensitive or high-churn files:
