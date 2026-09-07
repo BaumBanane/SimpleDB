@@ -9,8 +9,14 @@ public class ParserTest {
          String s = sc.nextLine();
          Parser p = new Parser(s);
          try {
-            if (s.startsWith("select"))
-               p.query();
+            QueryData qd;
+            if (s.startsWith("select")) {
+               qd = p.query();
+               System.out.println("Fields: " + qd.fields());
+               System.out.println("Tables: " + qd.tables());
+               System.out.println("Predicate: " + qd.pred());
+               System.out.println("Sort fields: " + qd.sortFields());
+            }
             else
                p.updateCmd();
             System.out.println("yes");
@@ -22,6 +28,7 @@ public class ParserTest {
       }
       sc.close();
    }
+
 }
 
 

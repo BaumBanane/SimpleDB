@@ -12,14 +12,16 @@ public class QueryData {
    private List<String> fields;
    private Collection<String> tables;
    private Predicate pred;
-   
+   private List<SortField> sortFields;
+
    /**
     * Saves the field and table list and predicate.
     */
-   public QueryData(List<String> fields, Collection<String> tables, Predicate pred) {
+   public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<SortField> sortFields) {
       this.fields = fields;
       this.tables = tables;
       this.pred = pred;
+      this.sortFields = sortFields;
    }
    
    /**
@@ -45,6 +47,15 @@ public class QueryData {
     */
    public Predicate pred() {
       return pred;
+   }
+
+   /**
+    * Returns the fields mentioned in the order by clause
+    * for which the query would be sorted by.
+    * @return a list of {@code SortField} objects
+    */
+   public List<SortField> sortFields() {
+      return sortFields;
    }
    
    public String toString() {

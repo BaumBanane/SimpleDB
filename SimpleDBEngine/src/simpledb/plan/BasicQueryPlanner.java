@@ -1,4 +1,5 @@
 package simpledb.plan;
+import simpledb.materialize.*;
 
 import java.util.*;
 import simpledb.tx.Transaction;
@@ -42,9 +43,15 @@ public class BasicQueryPlanner implements QueryPlanner {
       
       //Step 3: Add a selection plan for the predicate
       p = new SelectPlan(p, data.pred());
-      
-      //Step 4: Project on the field names
+
+       // Step 4: Sort fields if "order by" clause is present
+       if (!data.sortFields().isEmpty()) {
+           p = new SortPlan(tx, p, data.sortFields());
+       }
+
+      //Step 5: Project on the field names
       p = new ProjectPlan(p, data.fields());
+
       return p;
    }
 }
