@@ -15,7 +15,7 @@ public class QueryData {
    private List<SortField> sortFields;
 
    /**
-    * Saves the field and table list and predicate.
+    * Saves the field, table list, predicate and sort fields.
     */
    public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<SortField> sortFields) {
       this.fields = fields;
@@ -70,6 +70,13 @@ public class QueryData {
       String predstring = pred.toString();
       if (!predstring.equals(""))
          result += " where " + predstring;
+      if (!sortFields.isEmpty()) {
+         result += " order by ";
+         for (SortField fld : sortFields)
+            result += fld + ", ";
+      }
+      result = result.substring(0, result.length()-2); //remove final comma
+
       return result;
    }
 }
