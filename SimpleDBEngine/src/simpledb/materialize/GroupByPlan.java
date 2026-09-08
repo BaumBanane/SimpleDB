@@ -12,7 +12,7 @@ import simpledb.query.*;
  */
 public class GroupByPlan implements Plan {
    private Plan p;
-   private List<String> groupfields;
+   private List<SortField> groupfields;
    private List<AggregationFn> aggfns;
    private Schema sch = new Schema();
    
@@ -27,12 +27,12 @@ public class GroupByPlan implements Plan {
     * @param aggfns the aggregation functions
     * @param tx the calling transaction
     */
-   public GroupByPlan(Transaction tx, Plan p, List<String> groupfields, List<AggregationFn> aggfns) {
-      //this.p = new SortPlan(tx, p, groupfields);
+   public GroupByPlan(Transaction tx, Plan p, List<SortField> groupfields, List<AggregationFn> aggfns) {
+      this.p = new SortPlan(tx, p, groupfields);
       this.groupfields = groupfields;
       this.aggfns = aggfns;
-      for (String fldname : groupfields)
-         sch.add(fldname, p.schema());
+      for (SortField fld : groupfields)
+         sch.add(fld.field(), p.schema());
       for (AggregationFn fn : aggfns)
          sch.addIntField(fn.fieldName());
    }
@@ -68,8 +68,8 @@ public class GroupByPlan implements Plan {
     */
    public int recordsOutput() {
       int numgroups = 1;
-      for (String fldname : groupfields)
-         numgroups *= p.distinctValues(fldname);
+      for (SortField fld : groupfields)
+         numgroups *= p.distinctValues(fld.field());
       return numgroups;
    }
    

@@ -20,10 +20,10 @@ public class GroupValue {
     * @param s a scan
     * @param fields the list of fields
     */
-   public GroupValue(Scan s, List<String> fields) {
+   public GroupValue(Scan s, List<SortField> fields) {
       vals = new HashMap<String,Constant>();
-      for (String fldname : fields)
-         vals.put(fldname, s.getVal(fldname));
+      for (SortField fld : fields)
+         vals.put(fld.field(), s.getVal(fld.field()));
    }
    
    /**

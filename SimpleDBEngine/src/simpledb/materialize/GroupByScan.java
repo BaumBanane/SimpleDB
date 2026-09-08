@@ -10,7 +10,7 @@ import simpledb.query.*;
  */
 public class GroupByScan implements Scan {
    private Scan s;
-   private List<String> groupfields;
+   private List<SortField> groupfields;
    private List<AggregationFn> aggfns;
    private GroupValue groupval;
    private boolean moregroups;
@@ -21,9 +21,9 @@ public class GroupByScan implements Scan {
     * @param groupfields the group fields
     * @param aggfns the aggregation functions
     */
-   public GroupByScan(Scan s, List<String> groupfields, List<AggregationFn> aggfns) {
+   public GroupByScan(Scan s, List<SortField> groupfields, List<AggregationFn> aggfns) {
       this.s = s;
-      //this.groupfields = groupfields;
+      this.groupfields = groupfields;
       this.aggfns = aggfns;
       beforeFirst();
    }
