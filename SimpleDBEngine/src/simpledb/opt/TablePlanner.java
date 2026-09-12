@@ -66,6 +66,8 @@ class TablePlanner {
          return null;
       Plan p = makeIndexJoin(current, currsch);
       if (p == null)
+         p = makeNestedLoopsJoin(current, currsch);
+      if (p == null)
          p = makeProductJoin(current, currsch);
       return p;
    }
@@ -100,14 +102,25 @@ class TablePlanner {
             IndexInfo ii = indexes.get(fldname);
             Plan p = new IndexJoinPlan(current, myplan, ii, outerfield);
             p = addSelectPred(p);
+            System.out.println("index join on " + fldname);
             return addJoinPred(p, currsch);
          }
       }
       return null;
    }
-   
+
+   private Plan makeNestedLoopsJoin(Plan current, Schema currsch) {
+      Predicate joinpred = mypred.joinSubPred(myschema, currsch);
+      if (joinpred == null)
+         return null;
+      System.out.println("nested loops join");
+      return new NestedLoopsJoinPlan(current, addSelectPred(myplan), joinpred);
+   }
+
+
    private Plan makeProductJoin(Plan current, Schema currsch) {
       Plan p = makeProductPlan(current);
+      System.out.println("product join");
       return addJoinPred(p, currsch);
    }
    
