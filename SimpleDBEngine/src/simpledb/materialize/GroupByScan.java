@@ -85,11 +85,14 @@ public class GroupByScan implements Scan {
     * @see simpledb.query.Scan#getVal(java.lang.String)
     */
    public Constant getVal(String fldname) {
-      if (groupfields.contains(fldname))
-         return groupval.getVal(fldname);
+      for (SortField fld : groupfields) {
+         if (fld.field().equals(fldname)) {
+            return groupval.getVal(fldname);
+         }
+      }
       for (AggregationFn fn : aggfns)
          if (fn.fieldName().equals(fldname))
-         return fn.value();
+            return fn.value();
       throw new RuntimeException("field " + fldname + " not found.");
    }
    
@@ -122,11 +125,14 @@ public class GroupByScan implements Scan {
     * @see simpledb.query.Scan#hasField(java.lang.String)
     */
    public boolean hasField(String fldname) {
-      if (groupfields.contains(fldname))
-         return true;
+      for (SortField fld : groupfields) {
+         if (fld.field().equals(fldname)) {
+            return true;
+         }
+      }
       for (AggregationFn fn : aggfns)
          if (fn.fieldName().equals(fldname))
-         return true;
+            return true;
       return false;
    }
 }
