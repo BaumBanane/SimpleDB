@@ -20,7 +20,7 @@ public class JoinTest {
          doQuery(planner, tx, "select sname, dname from student, dept where majorid = did",
                  "sname", "dname");
 
-         // Merge join: equality join, no index on sid or studentid (should show 6 rows)
+         // Hash join: equality join, no index on sid or studentid (should show 6 rows)
          doQuery(planner, tx, "select sname, grade from student, enroll where sid = studentid",
                  "sname", "grade");
 
