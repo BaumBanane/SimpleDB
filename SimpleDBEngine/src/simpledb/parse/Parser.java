@@ -2,6 +2,7 @@ package simpledb.parse;
 
 import java.util.*;
 
+import simpledb.materialize.*;
 import simpledb.query.*;
 import simpledb.record.*;
 
@@ -53,7 +54,8 @@ public class Parser {
    }
 
    public SortField sortField() {
-      String field = field();
+      // an aggregate such as count(sid) sorts on its output field countofsid
+      String field = matchAggregationFn() ? aggregationFn().fieldName() : field();
       if (lex.matchKeyword("asc")) {
          lex.eatKeyword("asc");
          return new SortField(field, true);
@@ -64,12 +66,43 @@ public class Parser {
          return new SortField(field);
       }
    }
-   
+
+   private static final List<String> AGGREGATES = Arrays.asList("sum", "count", "avg", "min", "max");
+
+   private boolean matchAggregationFn() {
+      for (String agg : AGGREGATES)
+         if (lex.matchKeyword(agg))
+            return true;
+      return false;
+   }
+
+   public AggregationFn aggregationFn() {
+      String agg = null;
+      for (String a : AGGREGATES)
+         if (lex.matchKeyword(a))
+            agg = a;
+      if (agg == null)
+         throw new BadSyntaxException(); // expected an aggregate function
+      lex.eatKeyword(agg);
+      lex.eatDelim('(');
+      String fldname = field();
+      lex.eatDelim(')');
+      switch (agg) {
+         case "sum":   return new SumFn(fldname);
+         case "count": return new CountFn(fldname);
+         case "avg":   return new AvgFn(fldname);
+         case "min":   return new MinFn(fldname);
+         default:      return new MaxFn(fldname);
+      }
+   }
+
 // Methods for parsing queries
-   
+
    public QueryData query() {
       lex.eatKeyword("select");
-      List<String> fields = selectList();
+      List<String> fields = new ArrayList<>();
+      List<AggregationFn> aggfns = new ArrayList<>();
+      selectList(fields, aggfns);
       lex.eatKeyword("from");
       Collection<String> tables = tableList();
       Predicate pred = new Predicate();
@@ -77,21 +110,45 @@ public class Parser {
          lex.eatKeyword("where");
          pred = predicate();
       }
+      List<SortField> groupFields = new ArrayList<>();
+      if (lex.matchKeyword("group")) {
+         lex.eatKeyword("group");
+         lex.eatKeyword("by");
+         groupFields = groupList();
+      }
       List<SortField> sortFields = new ArrayList<>();
       if (lex.matchKeyword("order")) {
          lex.eatKeyword("order");
          lex.eatKeyword("by");
          sortFields = sortList();
       }
-      return new QueryData(fields, tables, pred, sortFields);
+      return new QueryData(fields, tables, pred, groupFields, aggfns, sortFields);
    }
-   
-   private List<String> selectList() {
-      List<String> L = new ArrayList<String>();
-      L.add(field());
+
+   /**
+    * Parses the select list. Aggregates are added to aggfns,
+    * and their output field names are added to fields.
+    */
+   private void selectList(List<String> fields, List<AggregationFn> aggfns) {
+      if (matchAggregationFn()) {
+         AggregationFn fn = aggregationFn();
+         aggfns.add(fn);
+         fields.add(fn.fieldName());
+      } else {
+         fields.add(field());
+      }
       if (lex.matchDelim(',')) {
          lex.eatDelim(',');
-         L.addAll(selectList());
+         selectList(fields, aggfns);
+      }
+   }
+
+   private List<SortField> groupList() {
+      List<SortField> L = new ArrayList<>();
+      L.add(new SortField(field()));
+      if (lex.matchDelim(',')) {
+         lex.eatDelim(',');
+         L.addAll(groupList());
       }
       return L;
    }

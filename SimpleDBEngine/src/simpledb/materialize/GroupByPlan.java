@@ -28,13 +28,13 @@ public class GroupByPlan implements Plan {
     * @param tx the calling transaction
     */
    public GroupByPlan(Transaction tx, Plan p, List<SortField> groupfields, List<AggregationFn> aggfns) {
-      this.p = new SortPlan(tx, p, groupfields);
+      this.p = groupfields.isEmpty() ? p : new SortPlan(tx, p, groupfields);
       this.groupfields = groupfields;
       this.aggfns = aggfns;
       for (SortField fld : groupfields)
          sch.add(fld.field(), p.schema());
       for (AggregationFn fn : aggfns)
-         sch.addIntField(fn.fieldName());
+         fn.addToSchema(sch, p.schema());
    }
    
    /**

@@ -2,6 +2,7 @@ package simpledb.parse;
 
 import java.util.*;
 
+import simpledb.materialize.AggregationFn;
 import simpledb.query.*;
 
 /**
@@ -12,26 +13,34 @@ public class QueryData {
    private List<String> fields;
    private Collection<String> tables;
    private Predicate pred;
+   private List<SortField> groupFields;
+   private List<AggregationFn> aggregates;
    private List<SortField> sortFields;
 
    /**
-    * Saves the field, table list, predicate and sort fields.
+    * Saves the field, table list, predicate, group by fields,
+    * aggregates and sort fields.
     */
-   public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<SortField> sortFields) {
+   public QueryData(List<String> fields, Collection<String> tables, Predicate pred,
+                    List<SortField> groupFields, List<AggregationFn> aggregates,
+                    List<SortField> sortFields) {
       this.fields = fields;
       this.tables = tables;
       this.pred = pred;
+      this.groupFields = groupFields;
+      this.aggregates = aggregates;
       this.sortFields = sortFields;
    }
-   
+
    /**
     * Returns the fields mentioned in the select clause.
+    * Aggregates are represented by their output field names.
     * @return a list of field names
     */
    public List<String> fields() {
       return fields;
    }
-   
+
    /**
     * Returns the tables mentioned in the from clause.
     * @return a collection of table names
@@ -39,7 +48,7 @@ public class QueryData {
    public Collection<String> tables() {
       return tables;
    }
-   
+
    /**
     * Returns the predicate that describes which
     * records should be in the output table.
@@ -50,6 +59,22 @@ public class QueryData {
    }
 
    /**
+    * Returns the fields mentioned in the group by clause.
+    * @return a list of {@code SortField} objects
+    */
+   public List<SortField> groupFields() {
+      return groupFields;
+   }
+
+   /**
+    * Returns the aggregation functions mentioned in the select clause.
+    * @return a list of aggregation functions
+    */
+   public List<AggregationFn> aggregates() {
+      return aggregates;
+   }
+
+   /**
     * Returns the fields mentioned in the order by clause
     * for which the query would be sorted by.
     * @return a list of {@code SortField} objects
@@ -57,26 +82,39 @@ public class QueryData {
    public List<SortField> sortFields() {
       return sortFields;
    }
-   
+
    public String toString() {
-      String result = "select ";
+      List<String> selects = new ArrayList<>();
       for (String fldname : fields)
-         result += fldname + ", ";
-      result = result.substring(0, result.length()-2); //remove final comma
-      result += " from ";
-      for (String tblname : tables)
-         result += tblname + ", ";
-      result = result.substring(0, result.length()-2); //remove final comma
+         selects.add(displayName(fldname));
+      String result = "select " + String.join(", ", selects);
+      result += " from " + String.join(", ", tables);
       String predstring = pred.toString();
       if (!predstring.equals(""))
          result += " where " + predstring;
-      if (!sortFields.isEmpty()) {
-         result += " order by ";
-         for (SortField fld : sortFields)
-            result += fld + ", ";
+      if (!groupFields.isEmpty()) {
+         List<String> groups = new ArrayList<>();
+         for (SortField fld : groupFields)
+            groups.add(fld.field());
+         result += " group by " + String.join(", ", groups);
       }
-      result = result.substring(0, result.length()-2); //remove final comma
-
+      if (!sortFields.isEmpty()) {
+         List<String> sorts = new ArrayList<>();
+         for (SortField fld : sortFields)
+            sorts.add(displayName(fld.field()) + (fld.isAscending() ? " asc" : " desc"));
+         result += " order by " + String.join(", ", sorts);
+      }
       return result;
+   }
+
+   /**
+    * Returns the SQL form of a field name, so that an
+    * aggregate field such as countofsid is shown as count(sid).
+    */
+   private String displayName(String fldname) {
+      for (AggregationFn fn : aggregates)
+         if (fn.fieldName().equals(fldname))
+            return fn.toString();
+      return fldname;
    }
 }
