@@ -183,6 +183,18 @@ public class HashJoinPlan implements Plan {
    /**
     * A partition of one of the inputs, stored in a temporary table.
     */
+   /**
+    * Returns a description of this plan, followed by the descriptions
+    * of both underlying plans at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "HashJoinPlan [" + fldname1 + "=" + fldname2 + "]"
+      + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+      + p1.planString(depth + 1)
+      + p2.planString(depth + 1);
+   }
+
    private class Partition {
       TempTable table;
       String fldname;

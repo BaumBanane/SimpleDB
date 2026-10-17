@@ -112,4 +112,16 @@ public class MultibufferProductPlan implements Plan {
       dest.close();
       return t;
    }
+
+   /**
+    * Returns a description of this plan, followed by the descriptions
+    * of both underlying plans at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "MultibufferProductPlan"
+      + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+      + lhs.planString(depth + 1)
+      + rhs.planString(depth + 1);
+   }
 }

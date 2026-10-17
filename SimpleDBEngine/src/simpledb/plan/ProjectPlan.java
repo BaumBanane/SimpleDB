@@ -69,4 +69,15 @@ public class ProjectPlan implements Plan {
    public Schema schema() {
       return schema;
    }
+
+   /**
+    * Returns a description of this plan, followed by the description
+    * of its underlying plan at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "ProjectPlan " + schema.fields()
+           + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+           + p.planString(depth + 1);
+   }
 }

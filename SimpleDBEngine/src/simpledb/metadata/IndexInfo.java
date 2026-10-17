@@ -95,6 +95,18 @@ public class IndexInfo {
    public int distinctValues(String fname) {
       return fldname.equals(fname) ? 1 : si.distinctValues(fldname);
    }
+
+   public String getFieldName() {
+      return fldname;
+   }
+
+   public String getIndexName() {
+      return idxname;
+   }
+
+   public  String getIndexType() {
+      return idxtype;
+   }
    
    /**
     * Return the layout of the index records.

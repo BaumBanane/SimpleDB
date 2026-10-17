@@ -100,6 +100,11 @@ public class Parser {
 
    public QueryData query() {
       lex.eatKeyword("select");
+      boolean isDistinct = false;
+      if (lex.matchKeyword("distinct")) {
+         lex.eatKeyword("distinct");
+         isDistinct = true;
+      }
       List<String> fields = new ArrayList<>();
       List<AggregationFn> aggfns = new ArrayList<>();
       selectList(fields, aggfns);
@@ -122,7 +127,7 @@ public class Parser {
          lex.eatKeyword("by");
          sortFields = sortList();
       }
-      return new QueryData(fields, tables, pred, groupFields, aggfns, sortFields);
+      return new QueryData(fields, tables, pred, groupFields, aggfns, sortFields, isDistinct);
    }
 
    /**

@@ -16,6 +16,7 @@ public class QueryData {
    private List<SortField> groupFields;
    private List<AggregationFn> aggregates;
    private List<SortField> sortFields;
+   private boolean isDistinct;
 
    /**
     * Saves the field, table list, predicate, group by fields,
@@ -23,13 +24,14 @@ public class QueryData {
     */
    public QueryData(List<String> fields, Collection<String> tables, Predicate pred,
                     List<SortField> groupFields, List<AggregationFn> aggregates,
-                    List<SortField> sortFields) {
+                    List<SortField> sortFields, boolean isDistinct) {
       this.fields = fields;
       this.tables = tables;
       this.pred = pred;
       this.groupFields = groupFields;
       this.aggregates = aggregates;
       this.sortFields = sortFields;
+      this.isDistinct = isDistinct;
    }
 
    /**
@@ -83,11 +85,18 @@ public class QueryData {
       return sortFields;
    }
 
+   /**
+    *  returns the isDistinct flag as a boolean.
+    */
+   public boolean isDistinct() {
+      return this.isDistinct;
+   }
+
    public String toString() {
       List<String> selects = new ArrayList<>();
       for (String fldname : fields)
          selects.add(displayName(fldname));
-      String result = "select " + String.join(", ", selects);
+      String result = "select " + (isDistinct ? "distinct " : "") + String.join(", ", selects);
       result += " from " + String.join(", ", tables);
       String predstring = pred.toString();
       if (!predstring.equals(""))

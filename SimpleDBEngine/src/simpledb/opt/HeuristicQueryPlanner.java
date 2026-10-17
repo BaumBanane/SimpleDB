@@ -53,13 +53,25 @@ public class HeuristicQueryPlanner implements QueryPlanner {
          currentplan = new GroupByPlan(tx, currentplan, data.groupFields(), data.aggregates());
       }
 
-      // Step 5: Sort fields if "order by" clause is present
-      if (!data.sortFields().isEmpty()) {
+      // Step 5: Sort fields if "order by" clause is present.
+      // When "distinct" is also present the sort is done after the
+      // duplicates have been removed, because DistinctPlan sorts on its
+      // own fields and would otherwise destroy this ordering.
+      if (!data.sortFields().isEmpty() && !data.isDistinct()) {
          currentplan = new SortPlan(tx, currentplan, data.sortFields());
       }
 
-      // Step 6.  Project on the field names and return
+      // Step 6.  Project on the field names
       currentplan = new ProjectPlan(currentplan, data.fields());
+
+      // Step 7: Remove duplicate records if "distinct" is present.
+      // This is done after the projection, since duplicates are
+      // determined by the fields in the select clause.
+      if (data.isDistinct()) {
+         currentplan = new DistinctPlan(tx, currentplan, data.fields());
+         if (!data.sortFields().isEmpty())
+            currentplan = new SortPlan(tx, currentplan, data.sortFields());
+      }
 
       return currentplan;
    }

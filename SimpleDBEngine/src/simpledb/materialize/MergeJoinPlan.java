@@ -98,5 +98,17 @@ public class MergeJoinPlan implements Plan {
    public Schema schema() {
       return sch;
    }
+
+   /**
+    * Returns a description of this plan, followed by the descriptions
+    * of both underlying plans at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "MergeJoinPlan [" + fldname1 + "=" + fldname2 + "]"
+      + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+      + p1.planString(depth + 1)
+      + p2.planString(depth + 1);
+   }
 }
 

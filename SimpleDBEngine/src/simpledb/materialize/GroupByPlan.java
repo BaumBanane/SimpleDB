@@ -98,4 +98,19 @@ public class GroupByPlan implements Plan {
    public Schema schema() {
       return sch;
    }
+
+   /**
+    * Returns a description of this plan, followed by the descriptions
+    * of both underlying plan at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      List<String> names = new ArrayList<>();
+      for (SortField fld : groupfields)
+         names.add(fld.field());
+      return Plan.indent(depth) + "GroupByPlan with group fields: " + names 
+      + ", aggregate functions: " + aggfns
+      + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+      + p.planString(depth + 1);
+   }
 }

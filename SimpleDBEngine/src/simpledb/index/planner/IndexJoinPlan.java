@@ -88,4 +88,18 @@ public class IndexJoinPlan implements Plan {
    public Schema schema() {
       return sch;
    }
+
+   /**
+    * Returns a description of this plan, followed by the description
+    * of its underlying plan at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "IndexJoinPlan " + ii.getIndexName()
+      + " on [" + joinfield + "=" + ii.getFieldName() + "]"
+      + " using " + ii.getIndexType()
+      + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+      + p1.planString(depth + 1)
+      + p2.planString(depth + 1);
+   }
 }

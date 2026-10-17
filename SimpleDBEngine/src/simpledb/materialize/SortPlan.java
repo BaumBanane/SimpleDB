@@ -15,6 +15,7 @@ public class SortPlan implements Plan {
    private Plan p;
    private Schema sch;
    private RecordComparator comp;
+   private List<SortField> fields;
    
    /**
     * Create a sort plan for the specified query.
@@ -27,6 +28,7 @@ public class SortPlan implements Plan {
       this.p = p;
       sch = p.schema();
       comp = new RecordComparator(sortfields);
+      this.fields = sortfields;
    }
    
    /**
@@ -149,5 +151,16 @@ public class SortPlan implements Plan {
       for (String fldname : sch.fields())
          dest.setVal(fldname, src.getVal(fldname));
       return src.next();
+   }
+
+   /**
+    * Returns a description of this plan, followed by the description
+    * of its underlying plan at the next level of indentation.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "SortPlan " + fields
+        + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+        + p.planString(depth + 1);
    }
 }

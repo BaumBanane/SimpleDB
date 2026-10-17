@@ -49,6 +49,8 @@ public class SimpleIJ {
       try //(ResultSet rs = planner.executeQuery(cmd))
       {
          Plan p = planner.createQueryPlan(cmd, tx);
+         System.out.println("\nQuery plan:");
+         System.out.print(p.planString(1));
          Scan s = p.open();
          Schema sch = p.schema();
          ResultSetMetaData md = new EmbeddedMetaData(sch);

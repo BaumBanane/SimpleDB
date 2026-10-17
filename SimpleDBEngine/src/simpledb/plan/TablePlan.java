@@ -70,4 +70,14 @@ public class TablePlan implements Plan {
    public Schema schema() {
       return layout.schema();
    }
+
+   /**
+    * Returns a description of this plan. A table plan has no
+    * underlying plans, so only one line is returned.
+    * @see simpledb.plan.Plan#planString(int)
+    */
+   public String planString(int depth) {
+      return Plan.indent(depth) + "TablePlan " + tblname
+           + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n";
+   }
 }

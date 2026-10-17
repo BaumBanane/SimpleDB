@@ -94,7 +94,6 @@ class TablePlanner {
          Constant val = mypred.equatesWithConstant(fldname);
          if (val != null) {
             IndexInfo ii = indexes.get(fldname);
-            System.out.println("index on " + fldname + " used");
             return new IndexSelectPlan(myplan, ii, val);
          }
       }
@@ -108,7 +107,6 @@ class TablePlanner {
             IndexInfo ii = indexes.get(fldname);
             Plan p = new IndexJoinPlan(current, myplan, ii, outerfield);
             p = addSelectPred(p);
-            System.out.println("index join on " + fldname);
             return addJoinPred(p, currsch);
          }
       }
@@ -119,7 +117,6 @@ class TablePlanner {
       Predicate joinpred = mypred.joinSubPred(myschema, currsch);
       if (joinpred == null)
          return null;
-      System.out.println("nested loops join");
       return new NestedLoopsJoinPlan(current, addSelectPred(myplan), joinpred);
    }
 
@@ -129,7 +126,6 @@ class TablePlanner {
          if (outerfield != null && currsch.hasField(outerfield)) {
             Plan p = new HashJoinPlan(tx, current, addSelectPred(myplan), outerfield, fldname);
             p = addJoinPred(p, currsch);
-            System.out.println("hash join on " + fldname);
             return p;
          }
       }
@@ -142,7 +138,6 @@ class TablePlanner {
          if (outerfield != null && currsch.hasField(outerfield)) {
             Plan p = new MergeJoinPlan(tx, current, addSelectPred(myplan), outerfield, fldname);
             p = addJoinPred(p, currsch);
-         System.out.println("merge join on " + fldname );
          return p;
          }
       }
@@ -151,7 +146,6 @@ class TablePlanner {
 
    private Plan makeProductJoin(Plan current, Schema currsch) {
       Plan p = makeProductPlan(current);
-      System.out.println("product join");
       return addJoinPred(p, currsch);
    }
    
