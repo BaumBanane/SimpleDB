@@ -7,6 +7,8 @@ import simpledb.server.SimpleDB;
 import simpledb.tx.Transaction;
 
 /* Runs a query for each join algorithm on student database.
+ * The query plan is printed before each result, which shows the join
+ * algorithm the planner chose.
  */
 
 public class JoinTest {
@@ -39,6 +41,7 @@ public class JoinTest {
                                String fld1, String fld2) {
       System.out.println("\n" + qry);
       Plan p = planner.createQueryPlan(qry, tx);
+      System.out.print(p.planString(1));
       Scan s = p.open();
       int count = 0;
       while (s.next()) {
