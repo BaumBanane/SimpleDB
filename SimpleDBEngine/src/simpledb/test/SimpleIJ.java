@@ -12,101 +12,102 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class SimpleIJ {
-   public static void main(String[] args) {
-      Scanner sc = new Scanner(System.in);
-      System.out.println("Connect> ");
-      String s = sc.nextLine();
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Connect> ");
+        String s = sc.nextLine();
 //      Driver d = (s.contains("//")) ? new NetworkDriver() : new EmbeddedDriver();
-      SimpleDB db = new SimpleDB(s.contains("server")?"studentdb_server":"studentdb");
-      Planner planner = db.planner();
-      try
+        SimpleDB db = new SimpleDB(s.contains("server") ? "studentdb_server" : "studentdb");
+        Planner planner = db.planner();
+        try
 //      (Connection conn = d.connect(s, null);
 //           Statement stmt = conn.createStatement())
-         {
-         System.out.print("\nSQL> ");
-         while (sc.hasNextLine()) {
-            Transaction tx;
-            // process one line of input
-            String cmd = sc.nextLine().trim();
-            if (cmd.startsWith("exit"))
-               break;
-            else if (cmd.startsWith("select")){
-               tx = db.newTx();
-               doQuery(planner, tx, cmd);}
-            else{
-               tx = db.newTx();
-               doUpdate(planner, tx, cmd);}
+        {
             System.out.print("\nSQL> ");
-         }
-      }
-      catch (Exception e) {
-         e.printStackTrace();
-      }
-      sc.close();
-   }
+            while (sc.hasNextLine()) {
+                Transaction tx;
+                // process one line of input
+                String cmd = sc.nextLine().trim();
+                if (cmd.startsWith("exit"))
+                    break;
+                else if (cmd.startsWith("select")) {
+                    tx = db.newTx();
+                    long start = System.currentTimeMillis();
+                    doQuery(planner, tx, cmd);
+                    long end = System.currentTimeMillis();
+                    System.out.println("Query execution took " + (end - start) + " ms");
+                } else {
+                    tx = db.newTx();
+                    doUpdate(planner, tx, cmd);
+                }
+                System.out.print("\nSQL> ");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        sc.close();
+    }
 
-   private static void doQuery(Planner planner, Transaction tx, String cmd) {
-      try //(ResultSet rs = planner.executeQuery(cmd))
-      {
-         Plan p = planner.createQueryPlan(cmd, tx);
-         System.out.println("\nQuery plan:");
-         System.out.print(p.planString(1));
-         Scan s = p.open();
-         Schema sch = p.schema();
-         ResultSetMetaData md = new EmbeddedMetaData(sch);
-   //    md =  rs.getMetaData();
-         int numcols = md.getColumnCount();
-         int totalwidth = 0;
+    private static void doQuery(Planner planner, Transaction tx, String cmd) {
+        try //(ResultSet rs = planner.executeQuery(cmd))
+        {
+            Plan p = planner.createQueryPlan(cmd, tx);
+            System.out.println("\nQuery plan:");
+            System.out.println(p.planString(1));
+            Scan s = p.open();
+            Schema sch = p.schema();
+            ResultSetMetaData md = new EmbeddedMetaData(sch);
+            //    md =  rs.getMetaData();
+            int numcols = md.getColumnCount();
+            int totalwidth = 0;
 
-         // print header
-         for(int i=1; i<=numcols; i++) {
-            String fldname = md.getColumnName(i);
-            int width = md.getColumnDisplaySize(i);
-            totalwidth += width;
-            String fmt = "%" + width + "s";
-            System.out.format(fmt, fldname);
-         }
-         System.out.println();
-         for(int i=0; i<totalwidth; i++)
-            System.out.print("-");
-         System.out.println();
-
-         // print records
-         while(s.next()) {
-            for (int i=1; i<=numcols; i++) {
-               String fldname = md.getColumnName(i);
-               int fldtype = md.getColumnType(i);
-               String fmt = "%" + md.getColumnDisplaySize(i);
-               if (fldtype == Types.INTEGER) {
-                  int ival = s.getInt(fldname);
-                  System.out.format(fmt + "d", ival);
-               }
-               else {
-                  String sval = s.getString(fldname);
-                  System.out.format(fmt + "s", sval);
-               }
+            // print header
+            for (int i = 1; i <= numcols; i++) {
+                String fldname = md.getColumnName(i);
+                int width = md.getColumnDisplaySize(i);
+                totalwidth += width;
+                String fmt = "%" + width + "s";
+                System.out.format(fmt, fldname);
             }
             System.out.println();
-         }
-         s.close();
-         tx.commit();
-      }
-      catch (Exception e) {
-         System.out.println("Exception: " + e.getMessage());
-         e.printStackTrace();
-         tx.rollback();
-      }
-   }
+            for (int i = 0; i < totalwidth; i++)
+                System.out.print("-");
+            System.out.println();
 
-   private static void doUpdate(Planner planner, Transaction tx, String cmd) {
-      try{
+            // print records
+            while (s.next()) {
+                for (int i = 1; i <= numcols; i++) {
+                    String fldname = md.getColumnName(i);
+                    int fldtype = md.getColumnType(i);
+                    String fmt = "%" + md.getColumnDisplaySize(i);
+                    if (fldtype == Types.INTEGER) {
+                        int ival = s.getInt(fldname);
+                        System.out.format(fmt + "d", ival);
+                    } else {
+                        String sval = s.getString(fldname);
+                        System.out.format(fmt + "s", sval);
+                    }
+                }
+                System.out.println();
+            }
+            s.close();
+            tx.commit();
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
+            e.printStackTrace();
+            tx.rollback();
+        }
+    }
 
-       int howmany = planner.executeUpdate(cmd, tx);
-       System.out.println(howmany + " records processed");
-       tx.commit();
-      } catch (Exception e){
-         System.out.println("Exception: " + e.getMessage());
-         tx.rollback();
-      }
-   }
+    private static void doUpdate(Planner planner, Transaction tx, String cmd) {
+        try {
+
+            int howmany = planner.executeUpdate(cmd, tx);
+            System.out.println(howmany + " records processed");
+            tx.commit();
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
+            tx.rollback();
+        }
+    }
 }

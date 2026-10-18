@@ -26,8 +26,8 @@ public class CreateStudentDB {
         // The index needs to be created before any data is inserted.
         // SimpleDB only updates indices when the underlying table changes.
         s = "create index idxMajorId on student(majorid)";
-        planner.executeUpdate(s,tx);
-        System.out.println("index created: "+s);
+        planner.executeUpdate(s, tx);
+        System.out.println("index created: " + s);
 
         s = "insert into STUDENT(SId, SName, MajorId, GradYear) values ";
         String[] studvals = {"(1, 'joe', 10, 2021)",
@@ -87,6 +87,10 @@ public class CreateStudentDB {
         s = "create table ENROLL(EId int, StudentId int, SectionId int, Grade varchar(2))";
         planner.executeUpdate(s, tx);
         System.out.println("Table ENROLL created.");
+
+        s = "create index idxEnrollStudent on enroll(studentid)";
+        planner.executeUpdate(s, tx);
+        System.out.println("index created: " + s);
 
         s = "insert into ENROLL(EId, StudentId, SectionId, Grade) values ";
         String[] enrollvals = {"(14, 1, 13, 'A')",

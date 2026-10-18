@@ -3,92 +3,113 @@ package simpledb.plan;
 import simpledb.query.Predicate;
 import simpledb.query.NestedLoopsJoinScan;
 import simpledb.query.Scan;
+import simpledb.query.SortField;
 import simpledb.record.Schema;
 
-/** The Plan class corresponding to the <i>nested-loops join</i>
-  * relational algebra operator.
-  * @author Edward Sciore
-  */
+/**
+ * The Plan class corresponding to the <i>nested-loops join</i>
+ * relational algebra operator.
+ *
+ * @author Edward Sciore
+ */
 public class NestedLoopsJoinPlan implements Plan {
-   private Plan p1, p2;
-   private Predicate pred;
-   private Schema schema = new Schema();
-   
-   /**
-    * Creates a new product node in the query tree,
-    * having the two specified subqueries.
-    * @param p1 the left-hand subquery
-    * @param p2 the right-hand subquery
-    */
-   public NestedLoopsJoinPlan(Plan p1, Plan p2, Predicate pred) {
-      this.p1 = p1;
-      this.p2 = p2;
-      this.pred = pred;
-      schema.addAll(p1.schema());
-      schema.addAll(p2.schema());
-   }
-   
-   /**
-    * Creates a product scan for this query.
-    * @see simpledb.plan.Plan#open()
-    */
-   public Scan open() {
-      Scan s1 = p1.open();
-      Scan s2 = p2.open();
-      return new NestedLoopsJoinScan(s1, s2, pred);
-   }
-   
-   /**
-    * Estimates the number of block accesses in the product.
-    * The formula is:
-    * <pre> B(product(p1,p2)) = B(p1) + R(p1)*B(p2) </pre>
-    * @see simpledb.plan.Plan#blocksAccessed()
-    */
-   public int blocksAccessed() {
-      return p1.blocksAccessed() + (p1.recordsOutput() * p2.blocksAccessed());
-   }
-   
-   /**
-    * Estimates the number of output records in the product.
-    * The formula is:
-    * <pre> R(product(p1,p2)) = R(p1)*R(p2) </pre>
-    * @see simpledb.plan.Plan#recordsOutput()
-    */
-   public int recordsOutput() {
-      return p1.recordsOutput() * p2.recordsOutput() / pred.reductionFactor(this);
-   }
-   
-   /**
-    * Estimates the distinct number of field values in the product.
-    * Since the product does not increase or decrease field values,
-    * the estimate is the same as in the appropriate underlying query.
-    * @see simpledb.plan.Plan#distinctValues(java.lang.String)
-    */
-   public int distinctValues(String fldname) {
-      if (p1.schema().hasField(fldname))
-         return p1.distinctValues(fldname);
-      else
-         return p2.distinctValues(fldname);
-   }
-   
-   /**
-    * Returns the schema of the product,
-    * which is the union of the schemas of the underlying queries.
-    * @see simpledb.plan.Plan#schema()
-    */
-   public Schema schema() {
-      return schema;
-   }
+    private final Plan p1;
+    private final Plan p2;
+    private final Predicate pred;
+    private final Schema schema = new Schema();
 
-   /**
-    * Returns a description of this plan, followed by the descriptions
-    * of both underlying plans at the next level of indentation.
-    * @see simpledb.plan.Plan#planString(int)
-    */
-   public String planString(int depth) {
-      return Plan.indent(depth) + "NestedLoopsJoinPlan [" + pred + "]"
-           + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
-           + p1.planString(depth + 1)
-           + p2.planString(depth + 1);
-   }
+    /**
+     * Creates a new product node in the query tree,
+     * having the two specified subqueries.
+     *
+     * @param p1 the left-hand subquery
+     * @param p2 the right-hand subquery
+     */
+    public NestedLoopsJoinPlan(Plan p1, Plan p2, Predicate pred) {
+        this.p1 = p1;
+        this.p2 = p2;
+        this.pred = pred;
+        schema.addAll(p1.schema());
+        schema.addAll(p2.schema());
+    }
+
+    /**
+     * Creates a product scan for this query.
+     *
+     * @see simpledb.plan.Plan#open()
+     */
+    public Scan open() {
+        Scan s1 = p1.open();
+        Scan s2 = p2.open();
+        return new NestedLoopsJoinScan(s1, s2, pred);
+    }
+
+    /**
+     * Estimates the number of block accesses in the product.
+     * The formula is:
+     * <pre> B(product(p1,p2)) = B(p1) + R(p1)*B(p2) </pre>
+     *
+     * @see simpledb.plan.Plan#blocksAccessed()
+     */
+    public int blocksAccessed() {
+        return p1.blocksAccessed() + (p1.recordsOutput() * p2.blocksAccessed());
+    }
+
+    /**
+     * Estimates the number of output records in the product.
+     * The formula is:
+     * <pre> R(product(p1,p2)) = R(p1)*R(p2) </pre>
+     *
+     * @see simpledb.plan.Plan#recordsOutput()
+     */
+    public int recordsOutput() {
+        return p1.recordsOutput() * p2.recordsOutput() / pred.reductionFactor(this);
+    }
+
+    /**
+     * Estimates the distinct number of field values in the product.
+     * Since the product does not increase or decrease field values,
+     * the estimate is the same as in the appropriate underlying query.
+     *
+     * @see simpledb.plan.Plan#distinctValues(java.lang.String)
+     */
+    public int distinctValues(String fldname) {
+        if (p1.schema().hasField(fldname))
+            return p1.distinctValues(fldname);
+        else
+            return p2.distinctValues(fldname);
+    }
+
+    /**
+     * Returns the schema of the product,
+     * which is the union of the schemas of the underlying queries.
+     *
+     * @see simpledb.plan.Plan#schema()
+     */
+    public Schema schema() {
+        return schema;
+    }
+
+    /**
+     * Return whether the join is sorted,
+     * which is true if the outer table is sorted.
+     *
+     * @see simpledb.plan.Plan#sortsOn(simpledb.query.SortField)
+     */
+    public boolean sortsOn(SortField fld) {
+        return p1.sortsOn(fld);
+    }
+
+    /**
+     * Returns a description of this plan, followed by the descriptions
+     * of both underlying plans at the next level of indentation.
+     *
+     * @see simpledb.plan.Plan#planString(int)
+     */
+    public String planString(int depth) {
+        return Plan.indent(depth) + "NestedLoopsJoinPlan [" + pred + "]"
+                + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+                + p1.planString(depth + 1)
+                + p2.planString(depth + 1);
+    }
 }

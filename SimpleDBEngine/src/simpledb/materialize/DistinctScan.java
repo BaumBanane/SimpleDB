@@ -10,8 +10,8 @@ import simpledb.query.*;
  */
 
 public class DistinctScan implements Scan {
-    private Scan s;
-    private List<SortField> fields;
+    private final Scan s;
+    private final List<SortField> fields;
     private GroupValue prev;
 
     public DistinctScan(Scan s, List<SortField> fields) {
@@ -21,12 +21,12 @@ public class DistinctScan implements Scan {
     }
 
     /**
-    * Position the scan before its first record. A
-    * subsequent call to next() will return the first record.
-    */
+     * Position the scan before its first record. A
+     * subsequent call to next() will return the first record.
+     */
     public void beforeFirst() {
-      s.beforeFirst();
-      prev = null;
+        s.beforeFirst();
+        prev = null;
     }
 
     /**
@@ -39,7 +39,7 @@ public class DistinctScan implements Scan {
      */
     public boolean next() {
         while (s.next()) {
-            GroupValue cur = new GroupValue(s , fields);
+            GroupValue cur = new GroupValue(s, fields);
             if (prev == null || !prev.equals(cur)) {
                 prev = cur;
                 return true;

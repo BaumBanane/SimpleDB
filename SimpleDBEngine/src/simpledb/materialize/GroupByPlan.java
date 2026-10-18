@@ -1,6 +1,7 @@
 package simpledb.materialize;
 
 import java.util.*;
+
 import simpledb.tx.Transaction;
 import simpledb.record.Schema;
 import simpledb.plan.Plan;
@@ -8,109 +9,128 @@ import simpledb.query.*;
 
 /**
  * The Plan class for the <i>groupby</i> operator.
+ *
  * @author Edward Sciore
  */
 public class GroupByPlan implements Plan {
-   private Plan p;
-   private List<SortField> groupfields;
-   private List<AggregationFn> aggfns;
-   private Schema sch = new Schema();
-   
-   /**
-    * Create a groupby plan for the underlying query.
-    * The grouping is determined by the specified
-    * collection of group fields,
-    * and the aggregation is computed by the
-    * specified collection of aggregation functions.
-    * @param p a plan for the underlying query
-    * @param groupfields the group fields
-    * @param aggfns the aggregation functions
-    * @param tx the calling transaction
-    */
-   public GroupByPlan(Transaction tx, Plan p, List<SortField> groupfields, List<AggregationFn> aggfns) {
-      this.p = groupfields.isEmpty() ? p : new SortPlan(tx, p, groupfields);
-      this.groupfields = groupfields;
-      this.aggfns = aggfns;
-      for (SortField fld : groupfields)
-         sch.add(fld.field(), p.schema());
-      for (AggregationFn fn : aggfns)
-         fn.addToSchema(sch, p.schema());
-   }
-   
-   /**
-    * This method opens a sort plan for the specified plan.
-    * The sort plan ensures that the underlying records
-    * will be appropriately grouped.
-    * @see simpledb.plan.Plan#open()
-    */
-   public Scan open() {
-      Scan s = p.open();
-      return new GroupByScan(s, groupfields, aggfns);
-   }
-   
-   /**
-    * Return the number of blocks required to
-    * compute the aggregation,
-    * which is one pass through the sorted table.
-    * It does <i>not</i> include the one-time cost
-    * of materializing and sorting the records.
-    * @see simpledb.plan.Plan#blocksAccessed()
-    */
-   public int blocksAccessed() {
-      return p.blocksAccessed();
-   }
-   
-   /**
-    * Return the number of groups.  Assuming equal distribution,
-    * this is the product of the distinct values
-    * for each grouping field.
-    * @see simpledb.plan.Plan#recordsOutput()
-    */
-   public int recordsOutput() {
-      int numgroups = 1;
-      for (SortField fld : groupfields)
-         numgroups *= p.distinctValues(fld.field());
-      return numgroups;
-   }
-   
-   /**
-    * Return the number of distinct values for the
-    * specified field.  If the field is a grouping field,
-    * then the number of distinct values is the same
-    * as in the underlying query.
-    * If the field is an aggregate field, then we
-    * assume that all values are distinct.
-    * @see simpledb.plan.Plan#distinctValues(java.lang.String)
-    */
-   public int distinctValues(String fldname) {
-      if (p.schema().hasField(fldname))
-         return p.distinctValues(fldname);
-      else
-         return recordsOutput();
-   }
-   
-   /**
-    * Returns the schema of the output table.
-    * The schema consists of the group fields,
-    * plus one field for each aggregation function.
-    * @see simpledb.plan.Plan#schema()
-    */
-   public Schema schema() {
-      return sch;
-   }
+    private final Plan p;
+    private final List<SortField> groupfields;
+    private final List<AggregationFn> aggfns;
+    private final Schema sch = new Schema();
 
-   /**
-    * Returns a description of this plan, followed by the descriptions
-    * of both underlying plan at the next level of indentation.
-    * @see simpledb.plan.Plan#planString(int)
-    */
-   public String planString(int depth) {
-      List<String> names = new ArrayList<>();
-      for (SortField fld : groupfields)
-         names.add(fld.field());
-      return Plan.indent(depth) + "GroupByPlan with group fields: " + names 
-      + ", aggregate functions: " + aggfns
-      + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
-      + p.planString(depth + 1);
-   }
+    /**
+     * Create a groupby plan for the underlying query.
+     * The grouping is determined by the specified
+     * collection of group fields,
+     * and the aggregation is computed by the
+     * specified collection of aggregation functions.
+     *
+     * @param p           a plan for the underlying query
+     * @param groupfields the group fields
+     * @param aggfns      the aggregation functions
+     * @param tx          the calling transaction
+     */
+    public GroupByPlan(Transaction tx, Plan p, List<SortField> groupfields, List<AggregationFn> aggfns) {
+        this.p = groupfields.isEmpty() ? p : new SortPlan(tx, p, groupfields);
+        this.groupfields = groupfields;
+        this.aggfns = aggfns;
+        for (SortField fld : groupfields)
+            sch.add(fld.field(), p.schema());
+        for (AggregationFn fn : aggfns)
+            fn.addToSchema(sch, p.schema());
+    }
+
+    /**
+     * This method opens a sort plan for the specified plan.
+     * The sort plan ensures that the underlying records
+     * will be appropriately grouped.
+     *
+     * @see simpledb.plan.Plan#open()
+     */
+    public Scan open() {
+        Scan s = p.open();
+        return new GroupByScan(s, groupfields, aggfns);
+    }
+
+    /**
+     * Return the number of blocks required to
+     * compute the aggregation,
+     * which is one pass through the sorted table.
+     * It does <i>not</i> include the one-time cost
+     * of materializing and sorting the records.
+     *
+     * @see simpledb.plan.Plan#blocksAccessed()
+     */
+    public int blocksAccessed() {
+        return p.blocksAccessed();
+    }
+
+    /**
+     * Return the number of groups.  Assuming equal distribution,
+     * this is the product of the distinct values
+     * for each grouping field.
+     *
+     * @see simpledb.plan.Plan#recordsOutput()
+     */
+    public int recordsOutput() {
+        int numgroups = 1;
+        for (SortField fld : groupfields)
+            numgroups *= p.distinctValues(fld.field());
+        return numgroups;
+    }
+
+    /**
+     * Return the number of distinct values for the
+     * specified field.  If the field is a grouping field,
+     * then the number of distinct values is the same
+     * as in the underlying query.
+     * If the field is an aggregate field, then we
+     * assume that all values are distinct.
+     *
+     * @see simpledb.plan.Plan#distinctValues(java.lang.String)
+     */
+    public int distinctValues(String fldname) {
+        if (p.schema().hasField(fldname))
+            return p.distinctValues(fldname);
+        else
+            return recordsOutput();
+    }
+
+    /**
+     * Returns the schema of the output table.
+     * The schema consists of the group fields,
+     * plus one field for each aggregation function.
+     *
+     * @see simpledb.plan.Plan#schema()
+     */
+    public Schema schema() {
+        return sch;
+    }
+
+    /**
+     * Returns whether the output table is sorted.
+     * If the underlying plan is a SortPlan,
+     * the groups are scanned in sorted order.
+     *
+     * @see simpledb.plan.Plan#sortsOn(simpledb.query.SortField)
+     */
+    public boolean sortsOn(SortField fldname) {
+        return p.sortsOn(fldname);
+    }
+
+    /**
+     * Returns a description of this plan, followed by the descriptions
+     * of both underlying plan at the next level of indentation.
+     *
+     * @see simpledb.plan.Plan#planString(int)
+     */
+    public String planString(int depth) {
+        List<String> names = new ArrayList<>();
+        for (SortField fld : groupfields)
+            names.add(fld.field());
+        return Plan.indent(depth) + "GroupByPlan with group fields: " + names
+                + ", aggregate functions: " + aggfns
+                + "  (B=" + blocksAccessed() + ", R=" + recordsOutput() + ")\n"
+                + p.planString(depth + 1);
+    }
 }
