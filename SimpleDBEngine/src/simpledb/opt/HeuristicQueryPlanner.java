@@ -4,6 +4,7 @@ import java.util.*;
 
 import simpledb.materialize.*;
 import simpledb.metadata.MetadataMgr;
+import simpledb.query.SortField;
 import simpledb.tx.Transaction;
 import simpledb.parse.QueryData;
 import simpledb.plan.*;
@@ -42,7 +43,9 @@ public class HeuristicQueryPlanner implements QueryPlanner {
 
         // Step 3:  Repeatedly add a plan to the join order
         while (!tableplanners.isEmpty()) {
-            Plan p = getLowestJoinPlan(currentplan, tableplanners);
+            // prefer merge join if query is not distinct, not grouped, not only one aggregate, and merge join sorts on sort records
+            boolean sortWouldBeUseful = !data.isDistinct() && data.groupFields().isEmpty() && data.aggregates().isEmpty() && tableplanners.size() == 1;
+            Plan p = getLowestJoinPlan(currentplan, tableplanners, sortWouldBeUseful ? data.sortFields() : Collections.emptyList());
             if (p != null)
                 currentplan = p;
             else  // no applicable join
@@ -58,7 +61,9 @@ public class HeuristicQueryPlanner implements QueryPlanner {
         // When "distinct" is also present the sort is done while the
         // duplicates are being removed, because DistinctPlan sorts anyway,
         // so it might as well sort on sortFields.
-        if (!data.sortFields().isEmpty() && !data.isDistinct()) {
+        // Also check if the plan is already sorted, and only sort if it is not.
+        boolean alreadySorted = data.sortFields().size() == 1 && currentplan.sortsOn(data.sortFields().get(0));
+        if (!data.sortFields().isEmpty() && !alreadySorted && !data.isDistinct()) {
             currentplan = new SortPlan(tx, currentplan, data.sortFields());
         }
 
@@ -68,8 +73,8 @@ public class HeuristicQueryPlanner implements QueryPlanner {
         // to integrate the sorting into the duplicate elimination.
         // Projection preserves order.
         // This assumption breaks when selecting distinct colA
-        // with oder by colB, but then the order is ambiguous,
-        // so incorrect behaviour is accepted.
+        // with order by colB, but then the order is ambiguous,
+        // so incorrect behavior is accepted.
         if (data.isDistinct()) {
             currentplan = new DistinctPlan(tx, currentplan, data.fields(), data.sortFields());
         }
@@ -94,11 +99,11 @@ public class HeuristicQueryPlanner implements QueryPlanner {
         return bestplan;
     }
 
-    private Plan getLowestJoinPlan(Plan current, Collection<TablePlanner> tableplanners) {
+    private Plan getLowestJoinPlan(Plan current, Collection<TablePlanner> tableplanners, List<SortField> outputSortRequirement) {
         TablePlanner besttp = null;
         Plan bestplan = null;
         for (TablePlanner tp : tableplanners) {
-            Plan plan = tp.makeJoinPlan(current);
+            Plan plan = tp.makeJoinPlan(current, outputSortRequirement);
             if (plan != null && (bestplan == null || plan.recordsOutput() < bestplan.recordsOutput())) {
                 besttp = tp;
                 bestplan = plan;

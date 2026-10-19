@@ -72,7 +72,7 @@ class TablePlanner {
      * @param current the specified plan
      * @return a join plan of the plan and this table
      */
-    public Plan makeJoinPlan(Plan current) {
+    public Plan makeJoinPlan(Plan current, List<SortField> outputSortRequirement) {
         Schema currsch = current.schema();
         Predicate joinpred = mypred.joinSubPred(myschema, currsch);
         if (joinpred == null)
@@ -81,7 +81,14 @@ class TablePlanner {
         Plan indexPlan = makeIndexJoin(current, currsch);
         if (indexPlan != null) return indexPlan; // always prefer index join if possible
         Plan mergePlan = makeMergeJoin(current, currsch);
-        if (mergePlan != null) possiblePlans.add(mergePlan);
+        if (mergePlan != null) {
+            boolean isSingleSort = outputSortRequirement != null && outputSortRequirement.size() == 1;
+            boolean satisfiesSort = isSingleSort && mergePlan.sortsOn(outputSortRequirement.get(0));
+            if (satisfiesSort)
+                return mergePlan;
+            else
+                possiblePlans.add(mergePlan);
+        }
         Plan hashPlan = makeHashJoin(current, currsch);
         if (hashPlan != null) possiblePlans.add(hashPlan);
         Plan nestedLoopsPlan = makeNestedLoopsJoin(current, currsch);
