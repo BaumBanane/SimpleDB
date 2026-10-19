@@ -12,7 +12,7 @@ import simpledb.record.*;
  *
  */
 public class Predicate {
-    private List<Term> terms = new ArrayList<Term>();
+    private final List<Term> terms = new ArrayList<>();
 
     /**
      * Create an empty predicate, corresponding to "true".
@@ -80,7 +80,7 @@ public class Predicate {
         for (Term t : terms)
             if (t.appliesTo(sch))
                 result.terms.add(t);
-        if (result.terms.size() == 0)
+        if (result.terms.isEmpty())
             return null;
         else
             return result;
@@ -182,9 +182,9 @@ public class Predicate {
         Iterator<Term> iter = terms.iterator();
         if (!iter.hasNext())
             return "";
-        String result = iter.next().toString();
+        StringBuilder result = new StringBuilder(iter.next().toString());
         while (iter.hasNext())
-            result += " and " + iter.next().toString();
-        return result;
+            result.append(" and ").append(iter.next().toString());
+        return result.toString();
     }
 }

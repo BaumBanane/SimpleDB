@@ -33,11 +33,7 @@ public class MergeJoinPlan implements Plan {
      */
     public MergeJoinPlan(Transaction tx, Plan p1, Plan p2, String fldname1, String fldname2) {
         // only sort p1 if it is not already sorted
-        if (p1.sortsOn(new SortField(fldname1, true))) {
-            sortP1 = false;
-        } else {
-            sortP1 = true;
-        }
+        sortP1 = !p1.sortsOn(new SortField(fldname1, true));
         fld1 = new SortField(fldname1, true);
         if (sortP1) {
             List<SortField> sortlist1 = List.of(fld1);

@@ -13,9 +13,10 @@ import simpledb.plan.Plan;
  * @author Edward Sciore
  */
 public class MultibufferProductPlan implements Plan {
-    private Transaction tx;
-    private Plan lhs, rhs;
-    private Schema schema = new Schema();
+    private final Transaction tx;
+    private final Plan lhs;
+    private final Plan rhs;
+    private final Schema schema = new Schema();
 
     /**
      * Creates a product plan for the specified queries.
@@ -109,7 +110,7 @@ public class MultibufferProductPlan implements Plan {
         Scan src = p.open();
         Schema sch = p.schema();
         TempTable t = new TempTable(tx, sch);
-        UpdateScan dest = (UpdateScan) t.open();
+        UpdateScan dest = t.open();
         while (src.next()) {
             dest.insert();
             for (String fldname : sch.fields())

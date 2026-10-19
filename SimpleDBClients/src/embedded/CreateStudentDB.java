@@ -33,8 +33,7 @@ public class CreateStudentDB {
                     "(7, 'art', 30, 2021)",
                     "(8, 'pat', 20, 2019)",
                     "(9, 'lee', 10, 2021)"};
-            for (int i = 0; i < studvals.length; i++)
-                stmt.executeUpdate(s + studvals[i]);
+            for (String studval : studvals) stmt.executeUpdate(s + studval);
             System.out.println("STUDENT records inserted.");
 
             s = "create table DEPT(DId int, DName varchar(8))";
@@ -45,8 +44,7 @@ public class CreateStudentDB {
             String[] deptvals = {"(10, 'compsci')",
                     "(20, 'math')",
                     "(30, 'drama')"};
-            for (int i = 0; i < deptvals.length; i++)
-                stmt.executeUpdate(s + deptvals[i]);
+            for (String deptval : deptvals) stmt.executeUpdate(s + deptval);
             System.out.println("DEPT records inserted.");
 
             s = "create table COURSE(CId int, Title varchar(20), DeptId int)";
@@ -60,8 +58,7 @@ public class CreateStudentDB {
                     "(42, 'algebra', 20)",
                     "(52, 'acting', 30)",
                     "(62, 'elocution', 30)"};
-            for (int i = 0; i < coursevals.length; i++)
-                stmt.executeUpdate(s + coursevals[i]);
+            for (String courseval : coursevals) stmt.executeUpdate(s + courseval);
             System.out.println("COURSE records inserted.");
 
             s = "create table SECTION(SectId int, CourseId int, Prof varchar(8), YearOffered int)";
@@ -74,8 +71,7 @@ public class CreateStudentDB {
                     "(33, 32, 'newton', 2019)",
                     "(43, 32, 'einstein', 2017)",
                     "(53, 62, 'brando', 2018)"};
-            for (int i = 0; i < sectvals.length; i++)
-                stmt.executeUpdate(s + sectvals[i]);
+            for (String sectval : sectvals) stmt.executeUpdate(s + sectval);
             System.out.println("SECTION records inserted.");
 
             s = "create table ENROLL(EId int, StudentId int, SectionId int, Grade varchar(2))";
@@ -93,8 +89,7 @@ public class CreateStudentDB {
                     "(44, 4, 33, 'B' )",
                     "(54, 4, 53, 'A' )",
                     "(64, 6, 53, 'A' )"};
-            for (int i = 0; i < enrollvals.length; i++)
-                stmt.executeUpdate(s + enrollvals[i]);
+            for (String enrollval : enrollvals) stmt.executeUpdate(s + enrollval);
             System.out.println("ENROLL records inserted.");
         } catch (SQLException e) {
             e.printStackTrace();

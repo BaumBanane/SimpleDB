@@ -90,8 +90,7 @@ public class SortScan implements Scan {
                 currentscan = s2;
         } else if (hasmore1)
             currentscan = s1;
-        else if (hasmore2)
-            currentscan = s2;
+        else currentscan = s2; // hasmore2 == true
         return true;
     }
 

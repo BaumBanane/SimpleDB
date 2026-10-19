@@ -62,14 +62,18 @@ public class HeuristicQueryPlanner implements QueryPlanner {
             currentplan = new SortPlan(tx, currentplan, data.sortFields());
         }
 
-        // Step 7: Remove duplicate records if "distinct" is present.
-        // This is done after the projection, since duplicates are
-        // determined by the fields in the select clause.
-        // todo update comment. add that sort is also done here and not messed up by project
+        // Step 6: Remove duplicate records if "distinct" is present.
+        // This is done before the projection, considering only
+        // the fields the projection will be on, because this allows
+        // to integrate the sorting into the duplicate elimination.
+        // Projection preserves order.
+        // This assumption breaks when selecting distinct colA
+        // with oder by colB, but then the order is ambiguous,
+        // so incorrect behaviour is accepted.
         if (data.isDistinct()) {
             currentplan = new DistinctPlan(tx, currentplan, data.fields(), data.sortFields());
         }
-        // Step 6.  Project on the field names
+        // Step 7:  Project on the field names
         currentplan = new ProjectPlan(currentplan, data.fields());
 
 
