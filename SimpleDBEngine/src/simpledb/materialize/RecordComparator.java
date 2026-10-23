@@ -42,4 +42,24 @@ public class RecordComparator implements Comparator<Scan> {
       }
       return 0;
    }
+
+   /**
+    * Compare two records that are held in memory instead of in scans.
+    * The fields are considered in the same order, and in the same
+    * direction, as when two scans are compared, so runs that are sorted
+    * with this method can be merged with the other compare method.
+    * @param r1 the first record, as a map from field name to value
+    * @param r2 the second record
+    * @return the result of comparing the two records
+    */
+   public int compare(Map<String,Constant> r1, Map<String,Constant> r2) {
+      for (SortField field: fields) {
+         Constant val1 = r1.get(field.field());
+         Constant val2 = r2.get(field.field());
+         int result = field.isAscending() ? val1.compareTo(val2) : val2.compareTo(val1);
+         if (result != 0)
+            return result;
+      }
+      return 0;
+   }
 }

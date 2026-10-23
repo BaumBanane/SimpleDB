@@ -61,10 +61,7 @@ public class SortPlan implements Plan {
      * @return the number of runs to merge at a time, at least 2
      */
     private int mergeFactor(int numruns) {
-        int k = tx.availableBuffs() - 1;  // one buffer for the output run
-        if (k < 2)
-            k = 2;                        // a merge needs at least 2 runs
-        return Math.min(k, numruns);
+        return Math.min(maxMergeFactor(tx), Math.max(2, numruns));
     }
 
 
@@ -125,24 +122,89 @@ public class SortPlan implements Plan {
         return sch;
     }
 
+    /**
+     * Split the underlying records into sorted runs.
+     * A fixed number of records is read into memory, sorted there, and
+     * written out as one run. The size of a run therefore depends only
+     * on the number of available buffers, not on how sorted the input
+     * happens to be, so the number of runs is
+     * ceil(number of records / records per run).
+     *
+     * @param src a scan of the underlying records
+     * @return the list of sorted runs
+     */
     private List<TempTable> splitIntoRuns(Scan src) {
         List<TempTable> temps = new ArrayList<>();
+        int capacity = recordsPerRun(tx, sch);
+        List<Map<String, Constant>> batch = new ArrayList<>();
+
         src.beforeFirst();
-        if (!src.next())
-            return temps;
-        TempTable currenttemp = new TempTable(tx, sch);
-        temps.add(currenttemp);
-        UpdateScan currentscan = currenttemp.open();
-        while (copy(src, currentscan))
-            if (comp.compare(src, currentscan) < 0) {
-                // start a new run
-                currentscan.close();
-                currenttemp = new TempTable(tx, sch);
-                temps.add(currenttemp);
-                currentscan = currenttemp.open();
+        while (src.next()) {
+            Map<String, Constant> row = new HashMap<>();
+            for (String fldname : sch.fields())
+                row.put(fldname, src.getVal(fldname));
+            batch.add(row);
+            if (batch.size() >= capacity) {
+                temps.add(writeRun(batch));
+                batch = new ArrayList<>();
             }
-        currentscan.close();
+        }
+        if (!batch.isEmpty())
+            temps.add(writeRun(batch));
         return temps;
+    }
+
+    /**
+     * Sort the specified records and write them to a new temporary table.
+     * The records are sorted with the same comparator that the merge
+     * phase uses, so the ordering of a run matches the ordering that the
+     * merge expects.
+     *
+     * @param batch the records to write
+     * @return the run holding the sorted records
+     */
+    private TempTable writeRun(List<Map<String, Constant>> batch) {
+        batch.sort(comp::compare);
+        TempTable run = new TempTable(tx, sch);
+        UpdateScan dest = run.open();
+        for (Map<String, Constant> row : batch) {
+            dest.insert();
+            for (String fldname : sch.fields())
+                dest.setVal(fldname, row.get(fldname));
+        }
+        dest.close();
+        return run;
+    }
+
+    /**
+     * Return the number of records that are sorted in memory to make
+     * one run. One buffer is left for the run being written, and the
+     * rest hold the records being sorted.
+     *
+     * @param tx  the transaction that has the buffers
+     * @param sch the schema of the records
+     * @return the number of records per run, at least 1
+     */
+    public static int recordsPerRun(Transaction tx, Schema sch) {
+        int buffs = Math.max(1, tx.availableBuffs() - 1);
+        int slotsize = new Layout(sch).slotSize();
+        int recsperblock = Math.max(1, tx.blockSize() / slotsize);
+        return buffs * recsperblock;
+    }
+
+    /**
+     * Return the number of runs that the specified number of records
+     * will be split into. Unlike the previous run generation, this does
+     * not depend on the order of the input records.
+     *
+     * @param tx      the transaction that has the buffers
+     * @param sch     the schema of the records
+     * @param numrecs the number of records to be sorted
+     * @return the number of runs, at least 1
+     */
+    public static int expectedRuns(Transaction tx, Schema sch, int numrecs) {
+        int capacity = recordsPerRun(tx, sch);
+        return Math.max(1, (int) Math.ceil((double) numrecs / capacity));
     }
 
     private List<TempTable> doAMergeIteration(List<TempTable> runs, int k) {
