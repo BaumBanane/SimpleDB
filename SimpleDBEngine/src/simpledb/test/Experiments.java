@@ -1,8 +1,12 @@
 package simpledb.test;
 
 import simpledb.jdbc.embedded.EmbeddedMetaData;
+import simpledb.materialize.HashJoinPlan;
+import simpledb.metadata.MetadataMgr;
 import simpledb.plan.Plan;
 import simpledb.plan.Planner;
+import simpledb.plan.ProjectPlan;
+import simpledb.plan.TablePlan;
 import simpledb.query.Scan;
 import simpledb.record.Schema;
 import simpledb.server.SimpleDB;
@@ -10,6 +14,7 @@ import simpledb.tx.Transaction;
 
 import java.io.File;
 import java.sql.ResultSetMetaData;
+import java.util.List;
 
 public class Experiments {
     public static void main(String[] args) {
@@ -39,6 +44,7 @@ public class Experiments {
     }
 
     private static void experiment2() {
+        SimpleDB.BUFFER_SIZE = 100;
         String[] testQueries = {
                 "select sname, grade, prof, title from student, enroll, section, course where sid = studentid and sectionid = sectid and courseid = cid"
         };
@@ -55,6 +61,48 @@ public class Experiments {
                 System.out.println("Query execution took " + (end - start) + " ms\n");
             }
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void runBushyHashJoin(SimpleDB db) {
+        Transaction tx = db.newTx();
+        try {
+            MetadataMgr mdm = db.mdMgr(); // or pass db metadata
+
+            // 1. Table scans
+            Plan pStudent = new TablePlan(tx, "student", mdm);
+            Plan pEnroll = new TablePlan(tx, "enroll", mdm);
+            Plan pSection = new TablePlan(tx, "section", mdm);
+            Plan pCourse = new TablePlan(tx, "course", mdm);
+
+            // 2. Left branch: STUDENT ⋈ ENROLL on sid = studentid
+            Plan leftBranch = new HashJoinPlan(tx, pStudent, pEnroll, "sid", "studentid");
+
+            // 3. Right branch: SECTION ⋈ COURSE on courseid = cid
+            Plan rightBranch = new HashJoinPlan(tx, pSection, pCourse, "courseid", "cid");
+
+            // 4. Bushy join: leftBranch ⋈ rightBranch on sectionid = sectid
+            Plan bushyJoin = new HashJoinPlan(tx, leftBranch, rightBranch, "sectionid", "sectid");
+
+            // 5. Project final fields
+            Plan finalPlan = new ProjectPlan(bushyJoin, List.of("sname", "grade", "prof", "title"));
+
+            System.out.println("Plan 3 (Bushy Hash Join):");
+            System.out.println(finalPlan.planString(1));
+
+            long start = System.currentTimeMillis();
+            Scan s = finalPlan.open();
+            int count = 0;
+            while (s.next()) {
+                count++;
+            }
+            s.close();
+            tx.commit();
+            long end = System.currentTimeMillis();
+            System.out.println("Returned " + count + " records in " + (end - start) + " ms\n");
+        } catch (Exception e) {
+            tx.rollback();
             e.printStackTrace();
         }
     }
@@ -81,6 +129,9 @@ public class Experiments {
         String s = "create table STUDENT(SId int, SName varchar(10), MajorId int, GradYear int)";
         planner.executeUpdate(s, tx);
         System.out.println("Table STUDENT created.");
+
+        s = "create index idxStudentSId on student(sid)";
+        planner.executeUpdate(s, tx);
 
         s = "create index idxMajorId on student(majorid)";
         planner.executeUpdate(s, tx);
@@ -127,6 +178,10 @@ public class Experiments {
         planner.executeUpdate(s, tx);
         System.out.println("Table COURSE created.");
 
+        s = "create index idxCourseCId on course(cid)";
+        planner.executeUpdate(s, tx);
+        System.out.println("Index created: " + s);
+
         s = "insert into COURSE(CId, Title, DeptId) values ";
         String[] coursevals = {
                 "(12, 'db systems', 10)", "(22, 'compilers', 10)", "(32, 'calculus', 20)",
@@ -152,6 +207,10 @@ public class Experiments {
         s = "create table SECTION(SectId int, CourseId int, Prof varchar(8), YearOffered int)";
         planner.executeUpdate(s, tx);
         System.out.println("Table SECTION created.");
+
+        s = "create index idxSectionSectId on section(sectid)";
+        planner.executeUpdate(s, tx);
+        System.out.println("Index created: " + s);
 
         s = "insert into SECTION(SectId, CourseId, Prof, YearOffered) values ";
         String[] sectvals = {
@@ -182,6 +241,9 @@ public class Experiments {
         s = "create table ENROLL(EId int, StudentId int, SectionId int, Grade varchar(2))";
         planner.executeUpdate(s, tx);
         System.out.println("Table ENROLL created.");
+
+        s = "create index idxEnrollSection on enroll(sectionid)";
+        planner.executeUpdate(s, tx);
 
         s = "create index idxEnrollStudent on enroll(studentid)";
         planner.executeUpdate(s, tx);
