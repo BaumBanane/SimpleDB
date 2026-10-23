@@ -7,103 +7,87 @@ import simpledb.record.*;
 
 /**
  * The Scan class for the <i>sort</i> operator.
+ * <p>
+ * The scan merges any number of sorted runs. Each run has its own
+ * underlying scan, and the scan that holds the smallest record is the
+ * current scan. Merging k runs here means that SortPlan only has to
+ * merge its runs until k of them are left, instead of 2.
  *
  * @author Edward Sciore
  */
 public class SortScan implements Scan {
-    private final UpdateScan s1;
-    private UpdateScan s2 = null;
-    private UpdateScan currentscan = null;
+    private final List<UpdateScan> scans = new ArrayList<>();
+    private final boolean[] hasmore;
     private final RecordComparator comp;
-    private boolean hasmore1, hasmore2 = false;
+    private int current = -1;
     private List<RID> savedposition;
+    private int savedcurrent = -1;
 
     /**
-     * Create a sort scan, given a list of 1 or 2 runs.
-     * If there is only 1 run, then s2 will be null and
-     * hasmore2 will be false.
+     * Create a sort scan, given a list of runs.
+     * The list may be empty, in which case the scan has no records.
      *
      * @param runs the list of runs
      * @param comp the record comparator
      */
     public SortScan(List<TempTable> runs, RecordComparator comp) {
         this.comp = comp;
-        if (!runs.isEmpty()) {
-            s1 = runs.get(0).open();
-            hasmore1 = s1.next();
-        } else {
-            s1 = null;
-            hasmore1 = false;
-        }
-        if (runs.size() > 1) {
-            s2 = runs.get(1).open();
-            hasmore2 = s2.next();
+        this.hasmore = new boolean[runs.size()];
+        for (int i = 0; i < runs.size(); i++) {
+            UpdateScan s = runs.get(i).open();
+            scans.add(s);
+            hasmore[i] = s.next();
         }
     }
 
     /**
      * Position the scan before the first record in sorted order.
      * Internally, it moves to the first record of each underlying scan.
-     * The variable currentscan is set to null, indicating that there is
-     * no current scan.
+     * The current scan is set to none, indicating that there is
+     * no current record.
      *
      * @see simpledb.query.Scan#beforeFirst()
      */
     public void beforeFirst() {
-        currentscan = null;
-        if (s1 != null) {
-            s1.beforeFirst();
-            hasmore1 = s1.next();
-        } else {
-            hasmore1 = false;
-        }
-        if (s2 != null) {
-            s2.beforeFirst();
-            hasmore2 = s2.next();
-        } else {
-            hasmore2 = false;
+        current = -1;
+        for (int i = 0; i < scans.size(); i++) {
+            UpdateScan s = scans.get(i);
+            s.beforeFirst();
+            hasmore[i] = s.next();
         }
     }
 
     /**
      * Move to the next record in sorted order.
      * First, the current scan is moved to the next record.
-     * Then the lowest record of the two scans is found, and that
-     * scan is chosen to be the new current scan.
+     * Then the scan holding the lowest record is found, and that
+     * scan becomes the new current scan.
+     * Returns false when every run has run out of records.
      *
      * @see simpledb.query.Scan#next()
      */
     public boolean next() {
-        if (currentscan != null) {
-            if (currentscan == s1)
-                hasmore1 = s1.next();
-            else if (currentscan == s2)
-                hasmore2 = s2.next();
-        }
+        if (current >= 0)
+            hasmore[current] = scans.get(current).next();
 
-        if (!hasmore1 && !hasmore2)
-            return false;
-        else if (hasmore1 && hasmore2) {
-            if (comp.compare(s1, s2) < 0)
-                currentscan = s1;
-            else
-                currentscan = s2;
-        } else if (hasmore1)
-            currentscan = s1;
-        else currentscan = s2; // hasmore2 == true
-        return true;
+        current = -1;
+        for (int i = 0; i < scans.size(); i++) {
+            if (!hasmore[i])
+                continue;
+            if (current < 0 || comp.compare(scans.get(i), scans.get(current)) < 0)
+                current = i;
+        }
+        return current >= 0;
     }
 
     /**
-     * Close the two underlying scans.
+     * Close the underlying scans.
      *
      * @see simpledb.query.Scan#close()
      */
     public void close() {
-        if (s1 != null)
-            s1.close();
-        if (s2 != null)
-            s2.close();
+        for (UpdateScan s : scans)
+            s.close();
     }
 
     /**
@@ -113,7 +97,7 @@ public class SortScan implements Scan {
      * @see simpledb.query.Scan#getVal(java.lang.String)
      */
     public Constant getVal(String fldname) {
-        return currentscan.getVal(fldname);
+        return scans.get(current).getVal(fldname);
     }
 
     /**
@@ -123,7 +107,7 @@ public class SortScan implements Scan {
      * @see simpledb.query.Scan#getInt(java.lang.String)
      */
     public int getInt(String fldname) {
-        return currentscan.getInt(fldname);
+        return scans.get(current).getInt(fldname);
     }
 
     /**
@@ -133,7 +117,7 @@ public class SortScan implements Scan {
      * @see simpledb.query.Scan#getString(java.lang.String)
      */
     public String getString(String fldname) {
-        return currentscan.getString(fldname);
+        return scans.get(current).getString(fldname);
     }
 
     /**
@@ -142,27 +126,32 @@ public class SortScan implements Scan {
      * @see simpledb.query.Scan#hasField(java.lang.String)
      */
     public boolean hasField(String fldname) {
-        return currentscan.hasField(fldname);
+        return scans.get(current).hasField(fldname);
     }
 
     /**
-     * Save the position of the current record,
-     * so that it can be restored at a later time.
+     * Save the position of the current record of every run,
+     * so that they can be restored at a later time.
+     * A run that has no more records saves no position.
      */
     public void savePosition() {
-        RID rid1 = s1.getRid();
-        RID rid2 = (s2 == null) ? null : s2.getRid();
-        savedposition = Arrays.asList(rid1, rid2);
+        savedposition = new ArrayList<>();
+        for (int i = 0; i < scans.size(); i++)
+            savedposition.add(hasmore[i] ? scans.get(i).getRid() : null);
+        savedcurrent = current;
     }
 
     /**
-     * Move the scan to its previously-saved position.
+     * Move every run to its previously-saved position.
      */
     public void restorePosition() {
-        RID rid1 = savedposition.get(0);
-        RID rid2 = savedposition.get(1);
-        s1.moveToRid(rid1);
-        if (rid2 != null)
-            s2.moveToRid(rid2);
+        for (int i = 0; i < scans.size(); i++) {
+            RID rid = savedposition.get(i);
+            if (rid != null) {
+                scans.get(i).moveToRid(rid);
+                hasmore[i] = true;
+            }
+        }
+        current = savedcurrent;
     }
 }

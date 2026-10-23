@@ -19,6 +19,7 @@ public class MergeJoinPlan implements Plan {
     private final SortField fld2;
     private final Schema sch = new Schema();
     private final boolean sortP1;
+    private final Transaction tx;
 
     /**
      * Creates a mergejoin plan for the two specified queries.
@@ -49,6 +50,7 @@ public class MergeJoinPlan implements Plan {
 
         sch.addAll(p1.schema());
         sch.addAll(p2.schema());
+        this.tx = tx;
     }
 
     /**
@@ -56,7 +58,7 @@ public class MergeJoinPlan implements Plan {
      * on their join field. It then returns a mergejoin scan
      * of the two sorted table scans.
      *
-     * @see simpledb.plan.Plan#open()
+     * @see Plan#open()
      */
     public Scan open() {
         Scan s1 = p1.open();
@@ -78,15 +80,17 @@ public class MergeJoinPlan implements Plan {
      * that it has to sort the inner relation for every outer block
      * if it is handed a SortPlan.
      *
-     * @see simpledb.plan.Plan#blocksAccessed()
+     * @see Plan#blocksAccessed()
      */
     public int blocksAccessed() {
         int blocks1 = p1.blocksAccessed();
         int blocks2 = p2.blocksAccessed();
         int mergeCost = blocks2 + blocks1;
         int sortCost = 0;
+        int mergeFactor = SortPlan.maxMergeFactor(tx);
+        double logK = Math.log(mergeFactor);
 
-        // SortPlan.java currently only does 2-way merges, so divide by log(2)
+        // SortPlan.java now also supports multiway sort, so divide by log(mergeFactor)!
         // SimpleDB also splits into runs without sorting them, but then the last pass is skipped
         if (sortP1) {
             // since SimpleDB creates a run whenever a tuple is smaller than the one before,
@@ -95,12 +99,12 @@ public class MergeJoinPlan implements Plan {
             int records1 = p1.recordsOutput();
             int expectedRuns1 = Math.max(1, records1 / 2);
             // outer Math.max: SimpleDB splits into runs even if only one block
-            int passes1 = (int) Math.max(1, Math.ceil(Math.log(expectedRuns1) / Math.log(2)));
+            int passes1 = (int) Math.max(1, Math.ceil(Math.log(expectedRuns1) / logK));
             sortCost += 2 * blocks1 * passes1;
         }
         int records2 = p2.recordsOutput();
         int expectedRuns2 = Math.max(1, records2 / 2);
-        int passes2 = (int) Math.max(1, Math.ceil(Math.log(expectedRuns2) / Math.log(2)));
+        int passes2 = (int) Math.max(1, Math.ceil(Math.log(expectedRuns2) / logK));
         sortCost += 2 * blocks2 * passes2;
 
         return sortCost + mergeCost;
@@ -111,7 +115,7 @@ public class MergeJoinPlan implements Plan {
      * Assuming uniform distribution, the formula is:
      * <pre> R(join(p1,p2)) = R(p1)*R(p2)/max{V(p1,F1),V(p2,F2)}</pre>
      *
-     * @see simpledb.plan.Plan#recordsOutput()
+     * @see Plan#recordsOutput()
      */
     public int recordsOutput() {
         int maxvals = Math.max(p1.distinctValues(fld1.field()),
@@ -124,7 +128,7 @@ public class MergeJoinPlan implements Plan {
      * Since the join does not increase or decrease field values,
      * the estimate is the same as in the appropriate underlying query.
      *
-     * @see simpledb.plan.Plan#distinctValues(java.lang.String)
+     * @see Plan#distinctValues(String)
      */
     public int distinctValues(String fldname) {
         if (p1.schema().hasField(fldname))
@@ -137,7 +141,7 @@ public class MergeJoinPlan implements Plan {
      * Return the schema of the join,
      * which is the union of the schemas of the underlying queries.
      *
-     * @see simpledb.plan.Plan#schema()
+     * @see Plan#schema()
      */
     public Schema schema() {
         return sch;
@@ -147,7 +151,7 @@ public class MergeJoinPlan implements Plan {
      * Return whether the join is sorted,
      * which is true for the join field of both relations.
      *
-     * @see simpledb.plan.Plan#sortsOn(simpledb.query.SortField)
+     * @see Plan#sortsOn(SortField)
      */
     public boolean sortsOn(SortField fld) {
         return fld.field().equals(fld1.field()) && fld.isAscending() == fld1.isAscending()
@@ -158,7 +162,7 @@ public class MergeJoinPlan implements Plan {
      * Returns a description of this plan, followed by the descriptions
      * of both underlying plans at the next level of indentation.
      *
-     * @see simpledb.plan.Plan#planString(int)
+     * @see Plan#planString(int)
      */
     public String planString(int depth) {
         return Plan.indent(depth) + "MergeJoinPlan [" + fld1.field() + "=" + fld2.field() + "]"
