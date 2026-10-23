@@ -14,7 +14,8 @@ import java.sql.ResultSetMetaData;
 public class Experiments {
     public static void main(String[] args) {
 //        setupExperimentDB();
-        experiment1();
+//        experiment1();
+        experiment2();
     }
 
     private static void experiment1() {
@@ -39,8 +40,22 @@ public class Experiments {
 
     private static void experiment2() {
         String[] testQueries = {
-                "select FIELDS from student, enroll, section, course where sid = studentid and sectionid = sectid and courseid = cid"
+                "select sname, prof, grade, title from student, enroll, section, course where sid = studentid and sectionid = sectid and courseid = cid"
         };
+        try {
+            SimpleDB db = new SimpleDB("experiments");
+            Planner planner = db.planner();
+            for (String q : testQueries) {
+                Transaction tx = db.newTx();
+                long start = System.currentTimeMillis();
+                System.out.println("Executing query: " + q);
+                doQuery(planner, tx, q);
+                long end = System.currentTimeMillis();
+                System.out.println("Query execution took " + (end - start) + " ms\n");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private static void setupExperimentDB() {

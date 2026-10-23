@@ -67,6 +67,18 @@ public class SortPlan implements Plan {
         return Math.min(k, numruns);
     }
 
+
+    /**
+     * Return the maximum number of runs that can be merged at a time.
+     *
+     * @param tx the transaction that has the buffers
+     * @return the number of runs to merge at a time, at least 2
+     */
+    public static int maxMergeFactor(Transaction tx) {
+        int k = tx.availableBuffs() - 1;
+        return Math.max(2, k);
+    }
+
     /**
      * Return the number of blocks in the sorted table,
      * which is the same as it would be in a
