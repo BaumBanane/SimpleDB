@@ -35,7 +35,7 @@ public class DemoSetup {
     }
 
     private static void setupExperimentDB() {
-        File dbDir = new File("studentdb");
+        File dbDir = new File("demo");
         if (dbDir.exists()) {
             deleteDirectory(dbDir);
         }
@@ -44,7 +44,7 @@ public class DemoSetup {
     }
 
     private static void insertData() {
-        SimpleDB db = new SimpleDB("experiments");
+        SimpleDB db = new SimpleDB("demo");
         Transaction tx = db.newTx();
         Planner planner = db.planner();
 
