@@ -10,7 +10,10 @@ import java.io.*;
  */
 public class Lexer {
     private Collection<String> keywords;
-    private StreamTokenizer tok;
+    private final StreamTokenizer tok;
+    private final String query;
+    private final PositionReader reader;
+    private int currentTokenStart = 0;
 
     /**
      * Creates a new lexical analyzer for SQL statement s.
@@ -18,15 +21,25 @@ public class Lexer {
      * @param s the SQL statement
      */
     public Lexer(String s) {
+        this.query = s;
         initKeywords();
-        tok = new StreamTokenizer(new StringReader(s));
+        reader = new PositionReader(s);
+        tok = new StreamTokenizer(reader);
         tok.ordinaryChar('.');   //disallow "." in identifiers
         tok.wordChars('_', '_'); //allow "_" in identifiers
         tok.lowerCaseMode(true); //ids and keywords are converted
         nextToken();
     }
 
-//Methods to check the status of the current token
+    public int getCurrentPosition() {
+        return currentTokenStart;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    //Methods to check the status of the current token
 
     /**
      * Returns true if the current token is
@@ -84,7 +97,7 @@ public class Lexer {
     public boolean matchCompOperator() {
         // if the tokenizer sees special characters, they are put into (char) tok.ttype directly
         char c = (char) (tok.ttype);
-        return c=='='||c=='<'||c=='>'||c=='!';
+        return c == '=' || c == '<' || c == '>' || c == '!';
     }
 
 //Methods to "eat" the current token
@@ -98,7 +111,7 @@ public class Lexer {
      */
     public void eatDelim(char d) {
         if (!matchDelim(d))
-            throw new BadSyntaxException();
+            throw new BadSyntaxException("expected delimiter " + d + ", got " + (char) tok.ttype, query, currentTokenStart);
         nextToken();
     }
 
@@ -111,7 +124,7 @@ public class Lexer {
      */
     public int eatIntConstant() {
         if (!matchIntConstant())
-            throw new BadSyntaxException();
+            throw new BadSyntaxException("expected int constant", query, currentTokenStart);
         int i = (int) tok.nval;
         nextToken();
         return i;
@@ -126,7 +139,7 @@ public class Lexer {
      */
     public String eatStringConstant() {
         if (!matchStringConstant())
-            throw new BadSyntaxException();
+            throw new BadSyntaxException("expected string constant", query, currentTokenStart);
         String s = tok.sval; //constants are not converted to lower case
         nextToken();
         return s;
@@ -141,7 +154,7 @@ public class Lexer {
      */
     public void eatKeyword(String w) {
         if (!matchKeyword(w))
-            throw new BadSyntaxException();
+            throw new BadSyntaxException("expected keyword " + w, query, currentTokenStart);
         nextToken();
     }
 
@@ -155,13 +168,13 @@ public class Lexer {
      */
     public String eatId() {
         if (!matchId())
-            throw new BadSyntaxException();
+            throw new BadSyntaxException("expected identifier", query, currentTokenStart);
         String s = tok.sval;
         nextToken();
         return s;
     }
 
-    public String eatCompOperator(){
+    public String eatCompOperator() {
         char first = (char) tok.ttype;
         if (first == '=') {
             nextToken();
@@ -169,25 +182,25 @@ public class Lexer {
         }
         nextToken(); // this is a wrapper around tok.nextToken() that catches IOExceptions
         char second = (char) tok.ttype;
-        if (first == '!'){
+        if (first == '!') {
             if (second == '=') {
                 nextToken();
                 return "!=";
             } else {
-                throw new BadSyntaxException(/* Invalid comparison operator: ! must be followed by = */);
+                throw new BadSyntaxException("Invalid comparison operator: ! must be followed by =", query, currentTokenStart);
             }
         }
-        if (first == '<'){
-            if (second == '='){
+        if (first == '<') {
+            if (second == '=') {
                 nextToken();
                 return "<=";
-            } else if (second == '>'){
+            } else if (second == '>') {
                 nextToken();
                 return "<>";
             } else return "<";
         }
-        if (first == '>'){
-            if (second == '='){
+        if (first == '>') {
+            if (second == '=') {
                 nextToken();
                 return ">=";
             } else return ">";
@@ -195,14 +208,18 @@ public class Lexer {
         // since all first characters that match accepts are fully handled, this should never happen
         // actually I call eat without calling match before
 //        System.out.println("matchCompOperator and eatCompOperator not in sync!");
-        throw new BadSyntaxException(); // expected comparison operator, got first + second
+        throw new BadSyntaxException("expected comparison operator, got " + first + second, query, currentTokenStart);
     }
 
     private void nextToken() {
         try {
+            // skip whitespace so the caret doesn't point to whitespace
+            while (reader.getPosition() < query.length() && Character.isWhitespace(query.charAt(reader.getPosition())))
+                reader.readNextChar();
+            currentTokenStart = reader.getPosition();
             tok.nextToken();
         } catch (IOException e) {
-            throw new BadSyntaxException();
+            throw new BadSyntaxException("IOException while getting next token", query, currentTokenStart);
         }
     }
 
@@ -212,5 +229,35 @@ public class Lexer {
                 "create", "table", "int", "varchar", "view", "as", "index", "on", "using", "hash", "btree",
                 "order", "by", "asc", "desc",
                 "group", "sum", "count", "avg", "min", "max", "distinct");
+    }
+
+    private static class PositionReader extends Reader {
+        private final String src;
+        private int pos = 0;
+
+        public PositionReader(String src) {
+            this.src = src;
+        }
+
+        public int getPosition() {
+            return pos;
+        }
+
+        public void readNextChar() {
+            if (pos < src.length()) pos++;
+        }
+
+        @Override
+        public int read(char[] cbuf, int off, int len) {
+            if (pos >= src.length()) return -1;
+            int bytesToRead = Math.min(len, src.length() - pos);
+            src.getChars(pos, pos + bytesToRead, cbuf, off);
+            pos += bytesToRead;
+            return bytesToRead;
+        }
+
+        @Override
+        public void close() {
+        }
     }
 }

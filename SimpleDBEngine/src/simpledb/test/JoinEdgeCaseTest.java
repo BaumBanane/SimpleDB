@@ -34,7 +34,8 @@ public class JoinEdgeCaseTest {
 
                     // Equality join with DISTINCT
                     // Should create HashJoinPlan and add SortPlan only once below DistinctPlan
-                    new QueryRequirement("select distinct sname, grade from student, enroll where sid = studentid order by studentid", "Should create HashJoinPlan and add SortPlan only once below DistinctPlan"),
+                    // this does not work with validation since the order field is not in the output, making order ambiguous if there are two students with same sname and grade
+//                    new QueryRequirement("select distinct sname, grade from student, enroll where sid = studentid order by studentid", "Should create HashJoinPlan and add SortPlan only once below DistinctPlan"),
 
                     // Index join with ORDER BY on index join key
                     // Should create IndexJoinPlan

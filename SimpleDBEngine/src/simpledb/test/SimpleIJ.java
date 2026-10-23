@@ -1,8 +1,12 @@
 package simpledb.test;
 
 import simpledb.jdbc.embedded.EmbeddedMetaData;
+import simpledb.parse.BadSyntaxException;
+import simpledb.parse.Parser;
 import simpledb.plan.Plan;
 import simpledb.plan.Planner;
+import simpledb.plan.ValidationException;
+import simpledb.plan.Validator;
 import simpledb.query.Scan;
 import simpledb.record.Schema;
 import simpledb.server.SimpleDB;
@@ -28,14 +32,11 @@ public class SimpleIJ {
                 Transaction tx;
                 // process one line of input
                 String cmd = sc.nextLine().trim();
-                if (cmd.startsWith("exit"))
+                if (cmd.toLowerCase().startsWith("exit"))
                     break;
-                else if (cmd.startsWith("select")) {
+                else if (cmd.toLowerCase().startsWith("select")) {
                     tx = db.newTx();
-                    long start = System.currentTimeMillis();
                     doQuery(planner, tx, cmd);
-                    long end = System.currentTimeMillis();
-                    System.out.println("Query execution took " + (end - start) + " ms");
                 } else {
                     tx = db.newTx();
                     doUpdate(planner, tx, cmd);
@@ -51,7 +52,18 @@ public class SimpleIJ {
     private static void doQuery(Planner planner, Transaction tx, String cmd) {
         try //(ResultSet rs = planner.executeQuery(cmd))
         {
-            Plan p = planner.createQueryPlan(cmd, tx);
+            Plan p;
+            try {
+                p = planner.createQueryPlan(cmd, tx);
+            } catch (BadSyntaxException e) {
+                Parser.handleBadSyntaxException(e);
+                tx.rollback();
+                return;
+            } catch (ValidationException e) {
+                Validator.handleValidationException(e);
+                tx.rollback();
+                return;
+            }
             System.out.println("\nQuery plan:");
             System.out.println(p.planString(1));
             Scan s = p.open();
@@ -105,6 +117,14 @@ public class SimpleIJ {
             int howmany = planner.executeUpdate(cmd, tx);
             System.out.println(howmany + " records processed");
             tx.commit();
+        } catch (BadSyntaxException e) {
+            Parser.handleBadSyntaxException(e);
+            tx.rollback();
+            return;
+        } catch (ValidationException e) {
+            Validator.handleValidationException(e);
+            tx.rollback();
+            return;
         } catch (Exception e) {
             System.out.println("Exception: " + e.getMessage());
             tx.rollback();

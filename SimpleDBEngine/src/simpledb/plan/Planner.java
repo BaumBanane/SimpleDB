@@ -1,5 +1,7 @@
 package simpledb.plan;
 
+import simpledb.metadata.MetadataMgr;
+import simpledb.query.*;
 import simpledb.tx.Transaction;
 import simpledb.parse.*;
 
@@ -11,10 +13,12 @@ import simpledb.parse.*;
 public class Planner {
     private final QueryPlanner qplanner;
     private final UpdatePlanner uplanner;
+    private final MetadataMgr metadataMgr;
 
-    public Planner(QueryPlanner qplanner, UpdatePlanner uplanner) {
+    public Planner(QueryPlanner qplanner, UpdatePlanner uplanner, MetadataMgr metadataMgr) {
         this.qplanner = qplanner;
         this.uplanner = uplanner;
+        this.metadataMgr = metadataMgr;
     }
 
     /**
@@ -27,7 +31,8 @@ public class Planner {
     public Plan createQueryPlan(String qry, Transaction tx) {
         Parser parser = new Parser(qry);
         QueryData data = parser.query();
-        verifyQuery(data);
+        Validator validator = new Validator(metadataMgr, tx);
+        validator.verifyQuery(data);
         return qplanner.createPlan(data, tx);
     }
 
@@ -45,7 +50,8 @@ public class Planner {
     public int executeUpdate(String cmd, Transaction tx) {
         Parser parser = new Parser(cmd);
         Object data = parser.updateCmd();
-        verifyUpdate(data);
+        Validator validator = new Validator(metadataMgr, tx);
+        validator.verifyUpdate(data);
         if (data instanceof InsertData)
             return uplanner.executeInsert((InsertData) data, tx);
         else if (data instanceof DeleteData)
@@ -62,12 +68,4 @@ public class Planner {
             return 0;
     }
 
-    // SimpleDB does not verify queries, although it should.
-    private void verifyQuery(QueryData data) {
-        // TODO
-    }
-
-    // SimpleDB does not verify updates, although it should.
-    private void verifyUpdate(Object data) {
-    }
 }

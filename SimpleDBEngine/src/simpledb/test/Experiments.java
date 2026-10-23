@@ -10,7 +10,6 @@ import simpledb.tx.Transaction;
 
 import java.io.File;
 import java.sql.ResultSetMetaData;
-import java.sql.Types;
 
 public class Experiments {
     public static void main(String[] args) {
@@ -36,6 +35,12 @@ public class Experiments {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static void experiment2() {
+        String[] testQueries = {
+                "select FIELDS from student, enroll, section, course where sid = studentid and sectionid = sectid and courseid = cid"
+        };
     }
 
     private static void setupExperimentDB() {

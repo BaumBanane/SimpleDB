@@ -29,6 +29,10 @@ public class Predicate {
         terms.add(t);
     }
 
+    public List<Term> getTerms() {
+        return terms;
+    }
+
     /**
      * Modifies the predicate to be the conjunction of
      * itself and the specified predicate.

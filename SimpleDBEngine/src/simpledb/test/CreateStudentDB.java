@@ -78,7 +78,7 @@ public class CreateStudentDB {
         planner.executeUpdate(s, tx);
         System.out.println("Table ENROLL created.");
 
-        s = "create index idxEnrollStudent on enroll(studentid)";
+        s = "create index idxEnrollStudent on enroll(studentid) using btree";
         planner.executeUpdate(s, tx);
         System.out.println("index created: " + s);
 
