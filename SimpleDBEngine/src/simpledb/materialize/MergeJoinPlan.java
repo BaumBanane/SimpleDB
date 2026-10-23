@@ -90,7 +90,7 @@ public class MergeJoinPlan implements Plan {
         int mergeFactor = SortPlan.maxMergeFactor(tx);
         double logK = Math.log(mergeFactor);
 
-        // SortPlan.java currently only does 2-way merges, so divide by log(2)
+        // SortPlan.java now also supports multiway sort, so divide by log(mergeFactor)!
         // SimpleDB also splits into runs without sorting them, but then the last pass is skipped
         if (sortP1) {
             // since SimpleDB creates a run whenever a tuple is smaller than the one before,
