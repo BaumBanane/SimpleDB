@@ -14,13 +14,24 @@ import java.sql.Types;
 
 public class DemoSetup {
     public static void main(String[] args) {
-        setupExperimentDB();
+        setupDemoDB();
+        String[] testQueries = {
+//                    "select sname, dname from student, dept where majorid=did"
+        };
+        String[] bonusValidateQueries = {
+                "INSERT INTO student (sid, sname, majorid) VALUES (1, 'alice', 10)",
+                "select majorid, count(sid) FROM student GROUP BY majorid ORDER BY count(sid)",
+                "select distinct grade from enroll order by studentid",
+                "select majorid from student group by majorid order by sname",
+                "SELECT majorid FROM student GROUP BY majorid ORDER BY count(sid)",
+        };
+        runQueries(testQueries);
+    }
+
+    private static void runQueries(String[] testQueries) {
         try {
             SimpleDB db = new SimpleDB("studentdb");
             Planner planner = db.planner();
-            String[] testQueries = {
-//                    "select sname, dname from student, dept where majorid=did"
-            };
             for (String q : testQueries) {
                 Transaction tx = db.newTx();
                 long start = System.currentTimeMillis();
@@ -34,7 +45,7 @@ public class DemoSetup {
         }
     }
 
-    private static void setupExperimentDB() {
+    private static void setupDemoDB() {
         File dbDir = new File("demo");
         if (dbDir.exists()) {
             deleteDirectory(dbDir);
