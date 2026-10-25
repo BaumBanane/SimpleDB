@@ -16,8 +16,26 @@ public class DemoSetup {
     public static void main(String[] args) {
         setupDemoDB();
         String[] testQueries = {
-//                    "select sname, dname from student, dept where majorid=did"
+                "select sname, dname from student, dept where majorid=did",
         };
+        String[] lab2IndexSelect = {
+                "select sname from student where majorid = 10 and sname != 'stu41'",
+                "select did, dname from dept where did = 10", // btree
+        };
+        String[] lab6JoinWithAndWithoutDuplicates = {
+                "select dname from student, dept where majorid=did",
+                "select distinct dname from student, dept where majorid=did",
+        };
+        String[] lab3OrderBy3WayJoin = {
+                // courses a student could not have taken
+                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid",
+                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid order by sname",
+        };
+        String[] lab5Aggregate = {
+                "select sname, count(sectionid) from student, enroll where sid = studentid group by sname",
+                "select count(cid) from course",
+        };
+
         String[] bonusValidateQueries = {
                 "INSERT INTO student (sid, sname, majorid) VALUES (1, 'alice', 10)",
                 "select majorid, count(sid) FROM student GROUP BY majorid ORDER BY count(sid)",
@@ -25,12 +43,12 @@ public class DemoSetup {
                 "select majorid from student group by majorid order by sname",
                 "SELECT majorid FROM student GROUP BY majorid ORDER BY count(sid)",
         };
-        runQueries(testQueries);
+        runQueries(lab5Aggregate);
     }
 
     private static void runQueries(String[] testQueries) {
         try {
-            SimpleDB db = new SimpleDB("studentdb");
+            SimpleDB db = new SimpleDB("demo");
             Planner planner = db.planner();
             for (String q : testQueries) {
                 Transaction tx = db.newTx();
@@ -87,6 +105,10 @@ public class DemoSetup {
         s = "create table DEPT(DId int, DName varchar(8))";
         planner.executeUpdate(s, tx);
         System.out.println("Table DEPT created.");
+
+        s = "create index idxDId on dept(did) using btree";
+        planner.executeUpdate(s, tx);
+        System.out.println("index created: " + s);
 
         s = "insert into DEPT(DId, DName) values ";
         String[] deptvals = {
