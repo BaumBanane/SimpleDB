@@ -22,6 +22,12 @@ public class DemoSetup {
                 "select sname from student where majorid = 10 and sname != 'stu41'",
                 "select did, dname from dept where did = 10", // btree
         };
+        String[] lab4Joins = {
+                "select sname, dname from student, dept where majorid = did", // index
+                "select sname, title from student, course where majorid > deptid", // nested loops
+                "select title, prof from course, section where cid = courseid", // merge - equality with no index
+                "select title, prof from course, section where cid = courseid order by cid" // merge - ordering
+        };
         String[] lab6JoinWithAndWithoutDuplicates = {
                 "select dname from student, dept where majorid=did",
                 "select distinct dname from student, dept where majorid=did",
@@ -43,7 +49,7 @@ public class DemoSetup {
                 "select majorid from student group by majorid order by sname",
                 "SELECT majorid FROM student GROUP BY majorid ORDER BY count(sid)",
         };
-        runQueries(lab5Aggregate);
+        runQueries(lab4Joins);
     }
 
     private static void runQueries(String[] testQueries) {
