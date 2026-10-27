@@ -31,6 +31,8 @@ public class DemoSetup {
         String[] lab6JoinWithAndWithoutDuplicates = {
                 "select dname from student, dept where majorid=did",
                 "select distinct dname from student, dept where majorid=did",
+                "select dname, gradyear from student, dept where majorid = did", // duplicates compared across full tuple
+                "select distinct dname, gradyear from student, dept where majorid = did"
         };
         String[] lab3OrderBy3WayJoin = {
                 // courses a student could not have taken
@@ -48,6 +50,12 @@ public class DemoSetup {
                 "select distinct grade from enroll order by studentid",
                 "select majorid from student group by majorid order by sname",
                 "SELECT majorid FROM student GROUP BY majorid ORDER BY count(sid)",
+        };
+        String[] bonusMultiwaySort = {
+            "select sname, gradyear from student order by gradyear desc, sname asc", // sorting
+            "select title, prof from course, section where cid = courseid" // join - neither table is indexed
+
+
         };
         runQueries(lab4Joins);
     }
