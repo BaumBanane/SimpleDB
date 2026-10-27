@@ -37,7 +37,7 @@ public class DemoSetup {
         };
         String[] lab3OrderBy3WayJoin = {
                 // courses a student could not have taken
-//                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid where title = logic and yearoffered = 2022 and gradyear = 2021",
+                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid and title = 'logic' and yearoffered = 2022 and gradyear = 2021",
 //                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid order by sname",
                 // All equality predicates
 //                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid",
@@ -93,7 +93,7 @@ public class DemoSetup {
                 "select sname, gradyear from student order by gradyear desc, sname asc", // sorting
                 "select title, prof from course, section where cid = courseid" // join - neither table is indexed
         };
-        runQueries(bonusValidateQueriesGood);
+        runQueries(lab3OrderBy3WayJoin);
 //        JoinEdgeCaseTest.main(null); // bonus optimizer
     }
 
