@@ -132,6 +132,8 @@ public class Parser {
             lex.eatKeyword("by");
             sortFields = sortList();
         }
+        if (lex.getCurrentPosition() < lex.getQuery().length())
+            throw new BadSyntaxException("unparseable data at end of query", lex.getQuery(), lex.getCurrentPosition());
         return new QueryData(fields, tables, pred, groupFields, aggfns, sortFields, isDistinct);
     }
 

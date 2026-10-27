@@ -35,35 +35,35 @@ public class DemoSetup {
                 "select sname, gradyear from student order by gradyear",
                 "select studentid, grade from enroll order by studentid asc, grade desc"
         };
+        String[] lab3OrderBy3WayJoin = {
+                // courses a student could not have taken
+//                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid where title = logic and yearoffered = 2022 and gradyear = 2021",
+//                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid order by sname",
+                // All equality predicates
+//                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid",
+//                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid order by sname, grade"
+
+        };
         String[] lab4Joins = {
                 "select sname, dname from student, dept where majorid = did", // index
                 "select sname, title from student, course where majorid > deptid", // nested loops
                 "select title, prof from course, section where cid = courseid", // merge - equality with no index, set SimpleDB.BUFFER_SIZE = 32
                 "select title, prof from course, section where cid = courseid order by cid" // merge - ordering
         };
-        String[] lab6JoinWithAndWithoutDuplicates = {
-                "select dname from student, dept where majorid=did",
-                "select distinct dname from student, dept where majorid=did",
-                "select dname, gradyear from student, dept where majorid = did", // duplicates compared across full tuple
-                "select distinct dname, gradyear from student, dept where majorid = did"
-        };
-        String[] lab3OrderBy3WayJoin = {
-                // courses a student could not have taken
-                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid",
-                "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid order by sname",
-                // All equality predicates
-                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid",
-                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid order by sname, grade"
-
-        };
         String[] lab5HashJoin = {
                 "select title, prof from course, section where cid = courseid",
                 "select sectionid, max(grade) from enroll, section where sectionid = sectid group by sectionid"
         };
         String[] lab5Aggregate = {
-                "select sname, count(sectionid) from student, enroll where sid = studentid group by sname",
-                "select count(cid) from course",
-                "select majorid, count(sid) from student group by majorid order by count(sid) desc"
+                "select count(sname) from student, enroll where sid = studentid group by gradyear, majorid",
+//                "select count(cid) from course",
+//                "select majorid, count(sid) from student group by majorid, count(sid)"
+        };
+        String[] lab6JoinWithAndWithoutDuplicates = {
+                "select dname from student, dept where majorid=did",
+                "select distinct dname from student, dept where majorid=did",
+                "select dname, gradyear from student, dept where majorid = did", // duplicates compared across full tuple
+                "select distinct dname, gradyear from student, dept where majorid = did"
         };
         String[] lab7integration = {
                 "select sid from student where sid = -5 order by sid",
@@ -76,11 +76,12 @@ public class DemoSetup {
                 "select majorid from student order by sname", // sname in relation, should work
         };
         String[] bonusValidateQueriesBad = {
-                "select sname from students",
+//                "select sname from students",
 //                "insert INTO student (sid, sname, majorid) VALUES (1, 'alice', '10')", // puts string into int
-                "select distinct grade from enroll order by studentid", // order ambiguous bc grades have multiple studentids
-                "select majorid from student group by majorid order by sname", // sname not in group
-                "select sname, majorid from student where majorid = 'compsci'"
+//                "select distinct grade from enroll order by studentid", // order ambiguous bc grades have multiple studentids
+//                "select majorid from student group by majorid order by sname", // sname not in group
+//                "select sname, majorid from student where majorid = 'compsci'"
+//                "select sname, count(sid) from student group by sname sid"
         };
         String[] bonusSyntaxBad = {
                 "selcet sname from student",
@@ -88,15 +89,12 @@ public class DemoSetup {
                 "select * from student",
                 "select sname from student where sname != alice",
         };
-        runQueries(lab2IndexSelect);
-//        JoinEdgeCaseTest.main(null); // bonus optimizer
         String[] bonusMultiwaySort = {
-            "select sname, gradyear from student order by gradyear desc, sname asc", // sorting
-            "select title, prof from course, section where cid = courseid" // join - neither table is indexed
-
-
+                "select sname, gradyear from student order by gradyear desc, sname asc", // sorting
+                "select title, prof from course, section where cid = courseid" // join - neither table is indexed
         };
-        runQueries(lab2IndexSelect);
+        runQueries(bonusValidateQueriesGood);
+//        JoinEdgeCaseTest.main(null); // bonus optimizer
     }
 
     private static void runQueries(String[] testQueries) {
