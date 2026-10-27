@@ -33,7 +33,7 @@ public class DemoSetup {
         String[] lab4Joins = {
                 "select sname, dname from student, dept where majorid = did", // index
                 "select sname, title from student, course where majorid > deptid", // nested loops
-                "select title, prof from course, section where cid = courseid", // merge - equality with no index
+                "select title, prof from course, section where cid = courseid", // merge - equality with no index, set SimpleDB.BUFFER_SIZE = 32
                 "select title, prof from course, section where cid = courseid order by cid" // merge - ordering
         };
         String[] lab6JoinWithAndWithoutDuplicates = {
@@ -73,7 +73,7 @@ public class DemoSetup {
 
 
         };
-        runQueries(lab1NonEqualityPredicates);
+        runQueries(lab4Joins);
     }
 
     private static void runQueries(String[] testQueries) {
