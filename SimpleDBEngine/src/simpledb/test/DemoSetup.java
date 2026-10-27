@@ -46,6 +46,10 @@ public class DemoSetup {
                 // courses a student could not have taken
                 "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid",
                 "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid order by sname",
+                // All equality predicates
+                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid",
+                "select sname, grade, prof from student, enroll, section where sid = studentid and sectionid = sectid order by sname, grade"
+
         };
         String[] lab5HashJoin = {
                 "select title, prof from course, section where cid = courseid",
