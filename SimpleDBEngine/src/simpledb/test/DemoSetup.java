@@ -18,9 +18,17 @@ public class DemoSetup {
         String[] testQueries = {
                 "select sname, dname from student, dept where majorid=did",
         };
+        String[] lab1NonEqualityPredicates = {
+                "select sname, majorid from student where sname < 'joe'",
+                "select gradyear, yearoffered from student, section where gradyear <> yearoffered",
+        };
         String[] lab2IndexSelect = {
                 "select sname from student where majorid = 10 and sname != 'stu41'",
                 "select did, dname from dept where did = 10", // btree
+        };
+        String[] lab3Sorting = {
+                "select sname, gradyear from student order by gradyear",
+                "select studentid, grade from enroll order by studentid asc, grade desc"
         };
         String[] lab4Joins = {
                 "select sname, dname from student, dept where majorid = did", // index
@@ -39,11 +47,15 @@ public class DemoSetup {
                 "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid",
                 "select sname, gradyear, yearoffered, prof, title from student, section, course where gradyear < yearoffered and courseid = cid order by sname",
         };
+        String[] lab5HashJoin = {
+                "select title, prof from course, section where cid = courseid",
+                "select sectionid, max(grade) from enroll, section where sectionid = sectid group by sectionid"
+        };
         String[] lab5Aggregate = {
                 "select sname, count(sectionid) from student, enroll where sid = studentid group by sname",
                 "select count(cid) from course",
+                "select majorid, count(sid) from student group by majorid order by count(sid) desc"
         };
-
         String[] bonusValidateQueries = {
                 "INSERT INTO student (sid, sname, majorid) VALUES (1, 'alice', 10)",
                 "select majorid, count(sid) FROM student GROUP BY majorid ORDER BY count(sid)",
@@ -57,7 +69,7 @@ public class DemoSetup {
 
 
         };
-        runQueries(lab4Joins);
+        runQueries(lab1NonEqualityPredicates);
     }
 
     private static void runQueries(String[] testQueries) {
