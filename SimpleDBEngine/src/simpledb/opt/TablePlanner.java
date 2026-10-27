@@ -80,6 +80,8 @@ class TablePlanner {
         List<Plan> possiblePlans = new ArrayList<>();
         Plan indexPlan = makeIndexJoin(current, currsch);
         if (indexPlan != null) return indexPlan; // always prefer index join if possible
+        Plan hashPlan = makeHashJoin(current, currsch);
+        if (hashPlan != null) possiblePlans.add(hashPlan);
         Plan mergePlan = makeMergeJoin(current, currsch);
         if (mergePlan != null) {
             boolean isSingleSort = outputSortRequirement != null && outputSortRequirement.size() == 1;
@@ -89,8 +91,6 @@ class TablePlanner {
             else
                 possiblePlans.add(mergePlan);
         }
-        Plan hashPlan = makeHashJoin(current, currsch);
-        if (hashPlan != null) possiblePlans.add(hashPlan);
         Plan nestedLoopsPlan = makeNestedLoopsJoin(current, currsch);
         if (nestedLoopsPlan != null) possiblePlans.add(nestedLoopsPlan);
         // productJoin is always worse than nestedLoopJoin if there is a predicate

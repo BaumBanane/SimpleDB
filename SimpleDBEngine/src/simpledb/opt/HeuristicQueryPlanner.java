@@ -73,8 +73,8 @@ public class HeuristicQueryPlanner implements QueryPlanner {
         // to integrate the sorting into the duplicate elimination.
         // Projection preserves order.
         // This assumption breaks when selecting distinct colA
-        // with order by colB, but then the order is ambiguous,
-        // so incorrect behavior is accepted.
+        // with order by colB, which is therefore
+        // prevented by the validator.
         if (data.isDistinct()) {
             currentplan = new DistinctPlan(tx, currentplan, data.fields(), data.sortFields());
         }

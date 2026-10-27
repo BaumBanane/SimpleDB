@@ -21,7 +21,7 @@ public class SimpleIJ {
         System.out.println("Connect> ");
         String s = sc.nextLine();
 //      Driver d = (s.contains("//")) ? new NetworkDriver() : new EmbeddedDriver();
-        SimpleDB db = new SimpleDB(s.contains("server") ? "studentdb_server" : "studentdb");
+        SimpleDB db = new SimpleDB(s.contains("server") ? "studentdb_server" : s.contains("demo") ? "demo" : "studentdb");
         Planner planner = db.planner();
         try
 //      (Connection conn = d.connect(s, null);

@@ -1,8 +1,12 @@
 package simpledb.test;
 
 import simpledb.jdbc.embedded.EmbeddedMetaData;
+import simpledb.parse.BadSyntaxException;
+import simpledb.parse.Parser;
 import simpledb.plan.Plan;
 import simpledb.plan.Planner;
+import simpledb.plan.ValidationException;
+import simpledb.plan.Validator;
 import simpledb.query.Scan;
 import simpledb.record.Schema;
 import simpledb.server.SimpleDB;
@@ -11,10 +15,11 @@ import simpledb.tx.Transaction;
 import java.io.File;
 import java.sql.ResultSetMetaData;
 import java.sql.Types;
+import java.util.Arrays;
 
 public class DemoSetup {
     public static void main(String[] args) {
-        setupDemoDB();
+//        setupDemoDB();
         String[] testQueries = {
                 "select sname, dname from student, dept where majorid=did",
         };
@@ -23,8 +28,8 @@ public class DemoSetup {
                 "select gradyear, yearoffered from student, section where gradyear <> yearoffered",
         };
         String[] lab2IndexSelect = {
-                "select sname from student where majorid = 10 and sname != 'stu41'",
                 "select did, dname from dept where did = 10", // btree
+                "select sname, dname from student, dept where majorid = did" // IndexJoin
         };
         String[] lab3Sorting = {
                 "select sname, gradyear from student order by gradyear",
@@ -60,20 +65,38 @@ public class DemoSetup {
                 "select count(cid) from course",
                 "select majorid, count(sid) from student group by majorid order by count(sid) desc"
         };
-        String[] bonusValidateQueries = {
-                "INSERT INTO student (sid, sname, majorid) VALUES (1, 'alice', 10)",
-                "select majorid, count(sid) FROM student GROUP BY majorid ORDER BY count(sid)",
-                "select distinct grade from enroll order by studentid",
-                "select majorid from student group by majorid order by sname",
-                "SELECT majorid FROM student GROUP BY majorid ORDER BY count(sid)",
+        String[] lab7integration = {
+                "select sid from student where sid = -5 order by sid",
         };
+
+        String[] bonusOptimizer = (String[]) Arrays.stream(JoinEdgeCaseTest.testQueries).map(qr -> qr.query()).toArray(String[]::new);
+
+        String[] bonusValidateQueriesGood = {
+                "select majorid, count(sid) FROM student GROUP BY majorid ORDER BY count(sid)", // this should work
+                "select majorid from student order by sname", // sname in relation, should work
+        };
+        String[] bonusValidateQueriesBad = {
+                "select sname from students",
+//                "insert INTO student (sid, sname, majorid) VALUES (1, 'alice', '10')", // puts string into int
+                "select distinct grade from enroll order by studentid", // order ambiguous bc grades have multiple studentids
+                "select majorid from student group by majorid order by sname", // sname not in group
+                "select sname, majorid from student where majorid = 'compsci'"
+        };
+        String[] bonusSyntaxBad = {
+                "selcet sname from student",
+                "select sname majorid from student",
+                "select * from student",
+                "select sname from student where sname != alice",
+        };
+        runQueries(lab2IndexSelect);
+//        JoinEdgeCaseTest.main(null); // bonus optimizer
         String[] bonusMultiwaySort = {
             "select sname, gradyear from student order by gradyear desc, sname asc", // sorting
             "select title, prof from course, section where cid = courseid" // join - neither table is indexed
 
 
         };
-        runQueries(lab4Joins);
+        runQueries(lab2IndexSelect);
     }
 
     private static void runQueries(String[] testQueries) {
@@ -90,6 +113,67 @@ public class DemoSetup {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void doQuery(Planner planner, Transaction tx, String cmd) {
+        try {
+            System.out.println("\nQuery: " + cmd);
+            Plan p;
+            try {
+                p = planner.createQueryPlan(cmd, tx);
+            } catch (BadSyntaxException e) {
+                Parser.handleBadSyntaxException(e);
+                tx.rollback();
+                return;
+            } catch (ValidationException e) {
+                Validator.handleValidationException(e);
+                tx.rollback();
+                return;
+            }
+            System.out.println("Query plan:");
+            System.out.println(p.planString(1));
+            Scan s = p.open();
+            Schema sch = p.schema();
+            ResultSetMetaData md = new EmbeddedMetaData(sch);
+            int numcols = md.getColumnCount();
+            int totalwidth = 0;
+
+            // print header
+            for (int i = 1; i <= numcols; i++) {
+                String fldname = md.getColumnName(i);
+                int width = md.getColumnDisplaySize(i);
+                totalwidth += width;
+                String fmt = "%" + width + "s";
+                System.out.format(fmt, fldname);
+            }
+            System.out.println();
+            for (int i = 0; i < totalwidth; i++)
+                System.out.print("-");
+            System.out.println();
+
+            // print records
+            while (s.next()) {
+                for (int i = 1; i <= numcols; i++) {
+                    String fldname = md.getColumnName(i);
+                    int fldtype = md.getColumnType(i);
+                    String fmt = "%" + md.getColumnDisplaySize(i);
+                    if (fldtype == Types.INTEGER) {
+                        int ival = s.getInt(fldname);
+                        System.out.format(fmt + "d", ival);
+                    } else {
+                        String sval = s.getString(fldname);
+                        System.out.format(fmt + "s", sval);
+                    }
+                }
+                System.out.println();
+            }
+            s.close();
+            tx.commit();
+        } catch (Exception e) {
+            System.out.println("Exception: " + e.getMessage());
+            e.printStackTrace();
+            tx.rollback();
         }
     }
 
@@ -198,9 +282,9 @@ public class DemoSetup {
         planner.executeUpdate(s, tx);
         System.out.println("Table ENROLL created.");
 
-        s = "create index idxEnrollStudent on enroll(studentid)";
-        planner.executeUpdate(s, tx);
-        System.out.println("index created: " + s);
+//        s = "create index idxEnrollStudent on enroll(studentid)";
+//        planner.executeUpdate(s, tx);
+//        System.out.println("index created: " + s);
 
         s = "insert into ENROLL(EId, StudentId, SectionId, Grade) values ";
         // Original 6 enrollments
@@ -221,55 +305,6 @@ public class DemoSetup {
         System.out.println("100 ENROLL records inserted.");
 
         tx.commit();
-    }
-
-    private static void doQuery(Planner planner, Transaction tx, String cmd) {
-        try {
-            Plan p = planner.createQueryPlan(cmd, tx);
-            System.out.println("\nQuery plan:");
-            System.out.println(p.planString(1));
-            Scan s = p.open();
-            Schema sch = p.schema();
-            ResultSetMetaData md = new EmbeddedMetaData(sch);
-            int numcols = md.getColumnCount();
-            int totalwidth = 0;
-
-            // print header
-            for (int i = 1; i <= numcols; i++) {
-                String fldname = md.getColumnName(i);
-                int width = md.getColumnDisplaySize(i);
-                totalwidth += width;
-                String fmt = "%" + width + "s";
-                System.out.format(fmt, fldname);
-            }
-            System.out.println();
-            for (int i = 0; i < totalwidth; i++)
-                System.out.print("-");
-            System.out.println();
-
-            // print records
-            while (s.next()) {
-                for (int i = 1; i <= numcols; i++) {
-                    String fldname = md.getColumnName(i);
-                    int fldtype = md.getColumnType(i);
-                    String fmt = "%" + md.getColumnDisplaySize(i);
-                    if (fldtype == Types.INTEGER) {
-                        int ival = s.getInt(fldname);
-                        System.out.format(fmt + "d", ival);
-                    } else {
-                        String sval = s.getString(fldname);
-                        System.out.format(fmt + "s", sval);
-                    }
-                }
-                System.out.println();
-            }
-            s.close();
-            tx.commit();
-        } catch (Exception e) {
-            System.out.println("Exception: " + e.getMessage());
-            e.printStackTrace();
-            tx.rollback();
-        }
     }
 
     private static void deleteDirectory(File dir) {
